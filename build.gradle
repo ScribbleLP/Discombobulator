@@ -8,7 +8,7 @@ plugins {
 sourceCompatibility = targetCompatibility = 17
 
 // Name, version and group for the project
-version = "1.2.1-SNAPSHOT"
+version = "1.2.1"
 group = "com.minecrafttas"
 archivesBaseName = "discombobulator"
 
@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-	testImplementation(platform('org.junit:junit-bom:5.9.1'))
+	testImplementation(platform('org.junit:junit-bom:5.11.3'))
 	testImplementation('org.junit.jupiter:junit-jupiter')
 }
 

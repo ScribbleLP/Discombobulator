@@ -2,7 +2,7 @@ pluginManagement {
 	repositories {
 		mavenLocal() // For development purposes
 		mavenCentral()
-		maven { url = "https://maven.mgnet.work" }
+		//maven { url = "https://maven.mgnet.work" }
 		maven { url = "https://maven.fabricmc.net" }
 		gradlePluginPortal()
 	}

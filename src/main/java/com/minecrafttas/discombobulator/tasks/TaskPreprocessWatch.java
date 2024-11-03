@@ -29,9 +29,9 @@ import com.minecrafttas.discombobulator.utils.Triple;
 public class TaskPreprocessWatch extends DefaultTask {
 
 	private List<FileWatcherThread> threads = new ArrayList<>();
-	
+
 	private Triple<List<String>, Path, Path> currentFileUpdater = null;
-	
+
 	private boolean msgSeen = false;
 
 	@TaskAction
@@ -63,27 +63,27 @@ public class TaskPreprocessWatch extends DefaultTask {
 			this.watch(version.right(), versions);
 
 		// Wait for user input and cancel the task
-		
-		Scanner sc= new Scanner(System.in);
+
+		Scanner sc = new Scanner(System.in);
 		System.out.println("Press ENTER to stop the file watcher");
 		String in;
 		try {
-			while(!(in = sc.nextLine()).isBlank()) {
-				if(!in.isBlank()) {
-					if(currentFileUpdater == null) {
+			while (!(in = sc.nextLine()).isBlank()) {
+				if (!in.isBlank()) {
+					if (currentFileUpdater == null) {
 						System.out.println("No recent file exists...\n");
 						continue;
 					}
 					Path outFile = currentFileUpdater.right();
 					Path inFile = currentFileUpdater.middle();
 					List<String> outLines = currentFileUpdater.left();
-					
+
 					Discombobulator.pathLock.scheduleAndLock(outFile);
 					Files.createDirectories(outFile.getParent());
 					SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 					Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(inFile));
 					currentFileUpdater = null;
-					
+
 					System.out.println(String.format("Processed the recently edited file %s\n", outFile.getFileName()));
 				}
 			}
@@ -112,7 +112,8 @@ public class TaskPreprocessWatch extends DefaultTask {
 		threads.add(new FileWatcherThread(watcher, version));
 	}
 
-	private FileWatcher constructFileWatcher(Path file, List<Pair<String, Path>> versions, String version) throws IOException {
+	private FileWatcher constructFileWatcher(Path file, List<Pair<String, Path>> versions, String version)
+			throws IOException {
 		return new FileWatcher(file) {
 
 			@Override
@@ -143,11 +144,12 @@ public class TaskPreprocessWatch extends DefaultTask {
 
 						// Preprocess the lines
 						String[] split = path.getFileName().toString().split("\\.");
-						List<String> outLines = Discombobulator.processor.preprocess(subVersion.left(), inLines, filename, split[split.length-1]);
-						
+						List<String> outLines = Discombobulator.processor.preprocess(subVersion.left(), inLines,
+								filename, split[split.length - 1]);
+
 						// Write file
 						Path outFile = subVersion.right().resolve(relativeFile);
-						
+
 						if (subVersion.right().equals(file)) {
 							currentFileUpdater = Triple.of(outLines, path, outFile);
 							continue;
@@ -155,18 +157,21 @@ public class TaskPreprocessWatch extends DefaultTask {
 
 						schedule.scheduleAndLock(outFile);
 						Files.createDirectories(outFile.getParent());
-						SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+						SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE,
+								StandardOpenOption.WRITE);
 						Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(path));
 					}
 					// Modify this file in base project
 					String[] split = path.getFileName().toString().split("\\.");
-					List<String> lines = Discombobulator.processor.preprocess(null, inLines, filename, split[split.length-1]);
-					Path outFile = new File(TaskPreprocessWatch.this.getProject().getProjectDir(), "src").toPath().toAbsolutePath().resolve(relativeFile);
+					List<String> lines = Discombobulator.processor.preprocess(null, inLines, filename,
+							split[split.length - 1]);
+					Path outFile = new File(TaskPreprocessWatch.this.getProject().getProjectDir(), "src").toPath()
+							.toAbsolutePath().resolve(relativeFile);
 					Files.createDirectories(outFile.getParent());
 					SafeFileOperations.write(outFile, lines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 					Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(path));
 					System.out.println(String.format("Processed %s in %s", path.getFileName(), version));
-					
+
 					if (msgSeen == false) {
 						System.out.println("Type 1 to also preprocess this file\n");
 						msgSeen = true;
@@ -190,14 +195,18 @@ public class TaskPreprocessWatch extends DefaultTask {
 					SafeFileOperations.delete(subVersion.right().resolve(relativeFile).toFile());
 				}
 				// Delete this file in base project
-				SafeFileOperations.delete(new File(TaskPreprocessWatch.this.getProject().getProjectDir(), "src").toPath().toAbsolutePath().resolve(relativeFile).toFile());
+				SafeFileOperations.delete(new File(TaskPreprocessWatch.this.getProject().getProjectDir(), "src")
+						.toPath().toAbsolutePath().resolve(relativeFile).toFile());
 			}
 		};
 	}
 
 	/**
 	 * Custom closable FileWatcher Thread
-	 * <p>Previously the threads kept running in the background, even after the main thread closed. With this, we can close the threads for good.
+	 * <p>
+	 * Previously the threads kept running in the background, even after the main
+	 * thread closed. With this, we can close the threads for good.
+	 * 
 	 * @author Scribble
 	 *
 	 */
@@ -207,7 +216,7 @@ public class TaskPreprocessWatch extends DefaultTask {
 
 		public FileWatcherThread(FileWatcher watcher, String version) {
 			super("FileWatcher-" + version);
-			System.out.println("Started watching "+version);
+			System.out.println("Started watching " + version);
 			this.watcher = watcher;
 			this.setDaemon(true);
 			this.start();
@@ -220,17 +229,17 @@ public class TaskPreprocessWatch extends DefaultTask {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (InterruptedException e) {
-				System.out.println("Interrupting "+this.getName());
+				System.out.println("Interrupting " + this.getName());
 				if (watcher != null)
 					watcher.close();
 				e.printStackTrace();
 			} catch (ClosedWatchServiceException e) {
-				System.out.println("Shutting down "+this.getName());
+				System.out.println("Shutting down " + this.getName());
 			}
 		}
-		
+
 		public void close() {
-			if(watcher!=null)
+			if (watcher != null)
 				watcher.close();
 		}
 	}
