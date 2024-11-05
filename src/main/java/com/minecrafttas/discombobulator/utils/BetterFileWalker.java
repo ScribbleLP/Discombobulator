@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 /**
  * Improvement to the java.nio.Files File Walker
- * @author games
+ * @author Pancake
  *
  */
 public class BetterFileWalker {
