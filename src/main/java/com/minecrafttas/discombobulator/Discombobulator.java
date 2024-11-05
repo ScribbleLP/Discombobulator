@@ -17,6 +17,7 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import com.minecrafttas.discombobulator.extensions.PreprocessingConfiguration;
 import com.minecrafttas.discombobulator.tasks.TaskCollectBuilds;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessBase;
+import com.minecrafttas.discombobulator.tasks.TaskPreprocessVersion;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessWatch;
 
 /**
@@ -64,6 +65,10 @@ public class Discombobulator implements Plugin<Project> {
 		List<Task> compileTasks = new ArrayList<>();
 		for (Project subProject : project.getSubprojects()) {
 			compileTasks.add(subProject.getTasksByName("remapJar", false).iterator().next());
+
+			TaskPreprocessVersion versionTask = subProject.getTasks().register("preprocessVersion", TaskPreprocessVersion.class).get();
+			versionTask.setGroup("discombobulator");
+			versionTask.setDescription("Preprocesses this version back to the base folder and to versions other than this one");
 		}
 		collectBuilds.updateCompileTasks(compileTasks);
 
