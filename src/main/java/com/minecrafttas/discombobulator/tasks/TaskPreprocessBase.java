@@ -1,19 +1,23 @@
 package com.minecrafttas.discombobulator.tasks;
 
-import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.utils.BetterFileWalker;
-import com.minecrafttas.discombobulator.utils.Pair;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.SocketLock;
 
@@ -33,42 +37,62 @@ public class TaskPreprocessBase extends DefaultTask {
 		System.out.println(Discombobulator.getSplash());
 
 		// Prepare list of physical version folders
-		List<Pair<String, String>> versionsConfig = Discombobulator.getVersionPairs();
-
-		List<Pair<String, String>> versions = new ArrayList<>();
-
-		for (Pair<String, String> versionConf : versionsConfig) {
-			String path = versionConf.right();
-			if (path == null) {
-				path = versionConf.left();
+		Path baseProjectDir = this.getProject().getProjectDir().toPath();
+		Map<String, Path> versionsConfig;
+		try {
+			versionsConfig = Discombobulator.getVersionPairs(baseProjectDir);
+		} catch (Exception e) {
+			if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+				Discombobulator.printError(e.getMessage());
+			} else {
+				e.printStackTrace();
 			}
-			if (new File(this.getProject().getProjectDir(), path + File.separator + "build.gradle").exists()) {
-				versions.add(Pair.of(versionConf.left(), path));
-			}
+			return;
 		}
 
-		System.out.println("Preprocessing base source...");
+		System.out.println("Preprocessing base source...\n");
 
-		File baseSourceDir = new File(this.getProject().getProjectDir(), "src");
-		if (!baseSourceDir.exists())
+		List<String> ignored = Discombobulator.ignored;
+
+		FileFilter fileFilter = WildcardFileFilter.builder().setWildcards(ignored).get();
+		if (!ignored.isEmpty())
+			System.out.println(String.format("Ignoring %s\n\n", ignored));
+
+		Path baseSourceDir = baseProjectDir.resolve("src");
+		if (!Files.exists(baseSourceDir))
 			throw new RuntimeException("Base source folder not found");
 
-		BetterFileWalker.walk(baseSourceDir.toPath(), path -> {
-			System.out.println("Preprocessing " + path.getFileName());
+		BetterFileWalker.walk(baseSourceDir, path -> {
+			System.out.println("Preprocessing " + path);
 			try {
-				for (Pair<String, String> version : versions) {
+				for (Entry<String, Path> versionPairs : versionsConfig.entrySet()) {
 					// Find input and output file
-					Path inFile = baseSourceDir.toPath().resolve(path);
-					Path outFile = new File(baseSourceDir.getParent(), version.right() + File.separatorChar + "src")
-							.toPath().resolve(path);
+					Path inFile = baseSourceDir.resolve(path);
+					Path subSourceDir = versionPairs.getValue().resolve("src");
+					Path outFile = subSourceDir.resolve(path);
+					String version = versionPairs.getKey();
 
 //					System.out.println(inFile);
 //					System.out.println(outFile+"\n");
 
+					if (fileFilter.accept(inFile.toFile())) {
+						System.out.println(String.format("Ignoring %s", inFile.getFileName().toString()));
+						Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+						continue;
+					}
+
 					// Preprocess file
-					String[] split = path.getFileName().toString().split("\\.");
-					List<String> lines = Discombobulator.processor.preprocess(version.left(),
-							Files.readAllLines(inFile), version.left(), split[split.length - 1]);
+					String extension = FilenameUtils.getExtension(path.getFileName().toString());
+
+					List<String> linesToProcess;
+					try {
+						linesToProcess = Files.readAllLines(inFile);
+					} catch (MalformedInputException e) {
+						Discombobulator.printError(String.format("Can't process the specified file, probably not a text file: %s\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", inFile.getFileName(), extension));
+						continue;
+					}
+
+					List<String> lines = Discombobulator.processor.preprocess(version, linesToProcess, path.getFileName().toString(), extension);
 
 					// Write file and update last modified date
 					Files.createDirectories(outFile.getParent());
@@ -79,21 +103,21 @@ public class TaskPreprocessBase extends DefaultTask {
 				e.printStackTrace();
 				throw new RuntimeException("Could not write to filesystem.", e);
 			} catch (Exception e) {
-				System.err.println(e.getMessage());
+				Discombobulator.printError(e.getMessage());
 				return;
 			}
 		});
 
 		// Delete all excess file in version folders
-		for (Pair<String, String> version : versions) {
-			Path subSourceDir = new File(baseSourceDir.getParent(), version.right() + File.separatorChar + "src")
-					.toPath();
-			BetterFileWalker.walk(subSourceDir, path -> {
+		for (Entry<String, Path> versionPairs : versionsConfig.entrySet()) {
+			String version = versionPairs.getKey();
+
+			BetterFileWalker.walk(baseSourceDir, path -> {
 				// Verify if file exists in base source dir
-				Path originalFile = baseSourceDir.toPath().resolve(path);
+				Path originalFile = baseSourceDir.resolve(path);
 				if (!Files.exists(originalFile)) {
-					System.out.println("Deleting " + path.getFileName() + " in " + version.left());
-					SafeFileOperations.delete(subSourceDir.resolve(path).toFile());
+					System.out.println("Deleting " + originalFile + " in " + version);
+					SafeFileOperations.delete(originalFile);
 				}
 			});
 		}

@@ -1,7 +1,6 @@
 package com.minecrafttas.discombobulator.utils;
 
 import java.awt.Desktop;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -17,15 +16,19 @@ public class SafeFileOperations {
 
 	/**
 	 * Moves a file to recycle bin instead of deleting it
-	 * @param f File
+	 * @param file The file to remove
 	 */
-	public static void delete(File f) {
-		if (f.isDirectory() || !f.exists())
+	public static void delete(Path file) {
+		if (Files.isDirectory(file) || !Files.exists(file))
 			return;
 		if (Desktop.isDesktopSupported())
-			Desktop.getDesktop().moveToTrash(f);
+			Desktop.getDesktop().moveToTrash(file.toFile());
 		else
-			f.delete();
+			try {
+				Files.delete(file);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 	}
 
 	/**

@@ -1,22 +1,26 @@
 package com.minecrafttas.discombobulator.tasks;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.PathLock;
 import com.minecrafttas.discombobulator.utils.FileWatcher;
-import com.minecrafttas.discombobulator.utils.Pair;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.SocketLock;
 import com.minecrafttas.discombobulator.utils.Triple;
@@ -31,8 +35,15 @@ public class TaskPreprocessWatch extends DefaultTask {
 	private List<FileWatcherThread> threads = new ArrayList<>();
 
 	private Triple<List<String>, Path, Path> currentFileUpdater = null;
+	/**
+	 * <p>The source dir in the base project that is used for version control<br>
+	 * <code>rootdir/src</code>
+	 */
+	private Path baseSourceDir;
 
 	private boolean msgSeen = false;
+
+	private WildcardFileFilter fileFilter;
 
 	@TaskAction
 	public void preprocessWatch() {
@@ -42,25 +53,30 @@ public class TaskPreprocessWatch extends DefaultTask {
 		lock.tryLock();
 
 		// Prepare list of physical version folders
-		// Left=Version, Right=Path to gradle folder
-		List<Pair<String, String>> versionsConfig = Discombobulator.getVersionPairs();
+		Path baseProjectDir = this.getProject().getProjectDir().toPath();
+		baseSourceDir = baseProjectDir.resolve("src");
 
-		List<Pair<String, Path>> versions = new ArrayList<>();
+		List<String> ignored = Discombobulator.ignored;
+		fileFilter = WildcardFileFilter.builder().setWildcards(ignored).get();
+		if (!ignored.isEmpty())
+			System.out.println(String.format("Ignoring %s\n\n", ignored));
 
-		for (Pair<String, String> versionConf : versionsConfig) {
-			String path = versionConf.right();
-			if (path == null) {
-				path = versionConf.left();
+		Map<String, Path> versionsConfig;
+		try {
+			versionsConfig = Discombobulator.getVersionPairs(baseProjectDir);
+		} catch (Exception e) {
+			if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+				Discombobulator.printError(e.getMessage());
+			} else {
+				e.printStackTrace();
 			}
-			File rootDir = new File(this.getProject().getProjectDir() + File.separator + path);
-			if (new File(rootDir, "build.gradle").exists()) {
-				String ver = versionConf.left();
-				versions.add(Pair.of(ver, new File(rootDir, "src").toPath().toAbsolutePath()));
-			}
+			return;
 		}
 
-		for (Pair<String, Path> version : versions)
-			this.watch(version.right(), versions);
+		for (Entry<String, Path> versionPair : versionsConfig.entrySet()) {
+			Path subSourceDir = versionPair.getValue().resolve("src");
+			this.watch(subSourceDir, versionsConfig);
+		}
 
 		// Wait for user input and cancel the task
 
@@ -98,23 +114,22 @@ public class TaskPreprocessWatch extends DefaultTask {
 	/**
 	 * Watches and preprocesses a source folder
 	 * 
-	 * @param file     Source folder
-	 * @param versions Map of versions
+	 * @param subSourceDir Source folder of the sub project
+	 * @param versionSet Map of versions
 	 */
-	private void watch(Path file, List<Pair<String, Path>> versions) {
-		String version = file.getParent().getFileName().toString();
+	private void watch(Path subSourceDir, Map<String, Path> versionSet) {
+		String version = subSourceDir.getParent().getFileName().toString();
 		FileWatcher watcher = null;
 		try {
-			watcher = constructFileWatcher(file, versions, version);
+			watcher = constructFileWatcher(subSourceDir, versionSet, version);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		threads.add(new FileWatcherThread(watcher, version));
 	}
 
-	private FileWatcher constructFileWatcher(Path file, List<Pair<String, Path>> versions, String version)
-			throws IOException {
-		return new FileWatcher(file) {
+	private FileWatcher constructFileWatcher(Path subSourceDir, Map<String, Path> versions, String version) throws IOException {
+		return new FileWatcher(subSourceDir) {
 
 			@Override
 			protected void onNewFile(Path path) {
@@ -123,7 +138,7 @@ public class TaskPreprocessWatch extends DefaultTask {
 
 			@Override
 			protected void onModifyFile(Path path) {
-				// Get the filename that is getting prerprocessed
+				// Get the filename that is getting preprocessed
 				String filename = path.getFileName().toString();
 
 				PathLock schedule = Discombobulator.pathLock;
@@ -131,42 +146,67 @@ public class TaskPreprocessWatch extends DefaultTask {
 					return;
 
 				// Get path relative to the root dir
-				Path relativeFile = file.relativize(path);
+				Path inFile = subSourceDir.relativize(path);
+
+				boolean ignore = false;
+				if (fileFilter.accept(inFile.toFile())) {
+					System.out.println(String.format("Ignoring %s", inFile.getFileName().toString()));
+					ignore = true;
+				}
+
 				try {
 					// Modify this file in other versions too
 
 					// Read the original file
-					List<String> inLines = Files.readAllLines(path);
+					String extension = FilenameUtils.getExtension(path.getFileName().toString());
+					List<String> linesToProcess = new ArrayList<>();
+					try {
+						if (!ignore)
+							linesToProcess = Files.readAllLines(path);
+					} catch (MalformedInputException e) {
+						Discombobulator.printError(String.format("Can't process the specified file, probably not a text file: %s\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", path.getFileName(), extension));
+						return;
+					}
 
 					// Iterate through all versions
-					for (Pair<String, Path> subVersion : versions) {
-						// If the version equals the original version, then skip it
-
-						// Preprocess the lines
-						String[] split = path.getFileName().toString().split("\\.");
-						List<String> outLines = Discombobulator.processor.preprocess(subVersion.left(), inLines,
-								filename, split[split.length - 1]);
+					for (Entry<String, Path> versionPair : versions.entrySet()) {
+						String versionName = versionPair.getKey();
+						Path targetProject = versionPair.getValue();
 
 						// Write file
-						Path outFile = subVersion.right().resolve(relativeFile);
+						Path outFile = targetProject.resolve(inFile);
 
-						if (subVersion.right().equals(file)) {
+						if (ignore) {
+							Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+							continue;
+						}
+
+						// Preprocess the lines
+						List<String> outLines = Discombobulator.processor.preprocess(versionName, linesToProcess, filename, extension);
+
+						// If the version equals the original version, then skip it
+						if (targetProject.equals(subSourceDir)) {
 							currentFileUpdater = Triple.of(outLines, path, outFile);
 							continue;
 						}
 
 						schedule.scheduleAndLock(outFile);
 						Files.createDirectories(outFile.getParent());
-						SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE,
-								StandardOpenOption.WRITE);
+						SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 						Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(path));
 					}
+
 					// Modify this file in base project
-					String[] split = path.getFileName().toString().split("\\.");
-					List<String> lines = Discombobulator.processor.preprocess(null, inLines, filename,
-							split[split.length - 1]);
-					Path outFile = new File(TaskPreprocessWatch.this.getProject().getProjectDir(), "src").toPath()
-							.toAbsolutePath().resolve(relativeFile);
+
+					Path outFile = baseSourceDir.resolve(inFile);
+
+					if (ignore) {
+						Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+						return;
+					}
+
+					List<String> lines = Discombobulator.processor.preprocess(null, linesToProcess, filename, extension);
+
 					Files.createDirectories(outFile.getParent());
 					SafeFileOperations.write(outFile, lines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 					Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(path));
@@ -179,24 +219,26 @@ public class TaskPreprocessWatch extends DefaultTask {
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					Discombobulator.printError(e.getMessage());
 					return;
 				}
 			}
 
 			@Override
 			protected void onDeleteFile(Path path) {
-				var relativeFile = file.relativize(path);
+				Path relativeFile = subSourceDir.relativize(path);
 				// Delete this file in other versions too
 				// Iterate through all versions
-				for (Pair<String, Path> subVersion : versions) {
-					if (subVersion.right().equals(file))
+				for (Entry<String, Path> versionPair : versions.entrySet()) {
+					Path targetProject = versionPair.getValue();
+
+					if (targetProject.equals(subSourceDir))
 						continue;
-					SafeFileOperations.delete(subVersion.right().resolve(relativeFile).toFile());
+
+					SafeFileOperations.delete(targetProject.resolve(relativeFile));
 				}
 				// Delete this file in base project
-				SafeFileOperations.delete(new File(TaskPreprocessWatch.this.getProject().getProjectDir(), "src")
-						.toPath().toAbsolutePath().resolve(relativeFile).toFile());
+				SafeFileOperations.delete(baseSourceDir.resolve(relativeFile));
 			}
 		};
 	}
@@ -227,7 +269,7 @@ public class TaskPreprocessWatch extends DefaultTask {
 			try {
 				watcher.watch();
 			} catch (IOException e) {
-				e.printStackTrace();
+//				e.printStackTrace();
 			} catch (InterruptedException e) {
 				System.out.println("Interrupting " + this.getName());
 				if (watcher != null)

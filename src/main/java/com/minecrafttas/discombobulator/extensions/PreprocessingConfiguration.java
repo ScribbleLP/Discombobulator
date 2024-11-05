@@ -16,14 +16,14 @@ public abstract class PreprocessingConfiguration {
 	 * All versions for the project
 	 * <pre>
 	 * versions = [
-	 * 	"1.14.4",
-	 * 	"1.12.2",
-	 * 	"1.8.9: AlternateFolderName1.8.9"
+	 * 	"1.14.4":"",
+	 * 	"1.12.2":"",
+	 * 	"1.8.9": "AlternateFolderName1.8.9"
 	 * ]
 	 * </pre>
 	 * @return Ordered list of versions
 	 */
-	public abstract ListProperty<String> getVersions();
+	public abstract MapProperty<String, String> getVersions();
 
 	/**
 	 * All patterns for the project.
@@ -53,4 +53,10 @@ public abstract class PreprocessingConfiguration {
 	 * @return The port number
 	 */
 	public abstract Property<Integer> getPort();
+
+	/**
+	 * Filetypes which should be ignored by the preprocessor and just copied
+	 * @return A string array of file filter wildcards
+	 */
+	public abstract ListProperty<String> getIgnoredFileFormats();
 }

@@ -1,9 +1,12 @@
 package com.minecrafttas.discombobulator;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -15,7 +18,6 @@ import com.minecrafttas.discombobulator.extensions.PreprocessingConfiguration;
 import com.minecrafttas.discombobulator.tasks.TaskCollectBuilds;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessBase;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessWatch;
-import com.minecrafttas.discombobulator.utils.Pair;
 
 /**
  * Gradle plugin main class
@@ -33,6 +35,8 @@ public class Discombobulator implements Plugin<Project> {
 	public static PathLock pathLock;
 
 	private static String discoVersion;
+
+	public static List<String> ignored;
 
 	/**
 	 * Apply the gradle plugin to the project
@@ -56,6 +60,7 @@ public class Discombobulator implements Plugin<Project> {
 		TaskCollectBuilds collectBuilds = project.getTasks().register("collectBuilds", TaskCollectBuilds.class).get();
 		collectBuilds.setGroup("discombobulator");
 		collectBuilds.setDescription("Builds, then collects all versions in root/build");
+
 		List<Task> compileTasks = new ArrayList<>();
 		for (Project subProject : project.getSubprojects()) {
 			compileTasks.add(subProject.getTasksByName("remapJar", false).iterator().next());
@@ -65,18 +70,30 @@ public class Discombobulator implements Plugin<Project> {
 		project.afterEvaluate(_project -> {
 			boolean inverted = config.getInverted().getOrElse(false);
 			PORT_LOCK = config.getPort().getOrElse(8762);
-			processor = new Processor(getVersion(), config.getPatterns().get(), inverted);
+
+			Map<String, Path> versionPairs = null;
+			Path projectDir = _project.getProjectDir().toPath();
+			try {
+				versionPairs = getVersionPairs(projectDir);
+			} catch (Exception e) {
+				if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+					printError(e.getMessage());
+				} else {
+					e.printStackTrace();
+				}
+				return;
+			}
+			List<String> versionStrings = new ArrayList<>(versionPairs.keySet());
+			processor = new Processor(versionStrings, config.getPatterns().get(), inverted);
 
 			// Yes this is yoinked from the gradle forums to get the disco version. Is there
 			// a better method? Probably. Do I care? Currently, no.
 			final Configuration classpath = _project.getBuildscript().getConfigurations().getByName("classpath");
-			final String version = classpath.getResolvedConfiguration().getResolvedArtifacts().stream()
-					.map(artifact -> artifact.getModuleVersion().getId())
-					.filter(id -> "com.minecrafttas".equalsIgnoreCase(id.getGroup())
-							&& "discombobulator".equalsIgnoreCase(id.getName()))
-					.findAny().map(ModuleVersionIdentifier::getVersion).orElseThrow(() -> new IllegalStateException(
-							"Discombobulator plugin has been deployed with wrong coordinates: expected group to be 'com.minecrafttas' and name to be 'Discombobulator'"));
+			final String version = classpath.getResolvedConfiguration().getResolvedArtifacts().stream().map(artifact -> artifact.getModuleVersion().getId()).filter(id -> "com.minecrafttas".equalsIgnoreCase(id.getGroup())
+					&& "discombobulator".equalsIgnoreCase(id.getName())).findAny().map(ModuleVersionIdentifier::getVersion).orElseThrow(() -> new IllegalStateException("Discombobulator plugin has been deployed with wrong coordinates: expected group to be 'com.minecrafttas' and name to be 'Discombobulator'"));
 			discoVersion = version;
+
+			ignored = config.getIgnoredFileFormats().getOrElse(new ArrayList<>());
 		});
 
 	}
@@ -91,33 +108,27 @@ public class Discombobulator implements Plugin<Project> {
 				+ " | |) | (_-< _/ _ \\ '  \\()| '_ \\/ _ \\ '_ \\ || | / _` |  _/ _ \\ '_| \n"
 				+ " |___/|_/__|__\\___/_|_|_| |_.__/\\___/_.__/\\_,_|_\\__,_|\\__\\___/_|   \n"
 				+ "                                                                   \n" + "\n"
-				+ getCenterText("You should try our sister preprocessor, Dicombobulator!") + "\n"
+				+ getCenterText("Less jank!") + "\n"
 				+ "		Created by Pancake and Scribble\n" + getCenterText(discoVersion) + "\n\n";
 
 	}
 
-	public static List<Pair<String, String>> getVersionPairs() {
-		List<Pair<String, String>> out = new ArrayList<>();
-		List<String> verPre = config.getVersions().get();
-		Pattern regex = Pattern.compile("([\\w\\.]+)(:\\s*(.+))?");
-		for (String ver : verPre) {
-			Matcher matcher = regex.matcher(ver);
-			if (matcher.find()) {
-				out.add(Pair.of(matcher.group(1), matcher.group(3)));
-			}
-		}
-		return out;
-	}
+	public static LinkedHashMap<String, Path> getVersionPairs(Path baseProjectDir) throws Exception {
+		Map<String, String> versionsConfig = config.getVersions().get();
+		LinkedHashMap<String, Path> versions = new LinkedHashMap<>();
 
-	public static List<String> getVersion() {
-		List<String> versions = new ArrayList<>();
-		Pattern regex = Pattern.compile("([\\w\\.]+)(:\\s*(.+))?");
-		// Initialize Processor
-		List<String> mapsnpaths = config.getVersions().get();
-		for (String ver : mapsnpaths) {
-			Matcher matcher = regex.matcher(ver);
-			if (matcher.find()) {
-				versions.add(matcher.group(1));
+		for (Entry<String, String> versionConf : versionsConfig.entrySet()) {
+			String version = versionConf.getKey();
+			String pathString = versionConf.getValue();
+			if (pathString == null || pathString.isEmpty()) {
+				pathString = version;
+			}
+			Path subProjectDir = baseProjectDir.resolve(pathString);
+
+			if (Files.exists(subProjectDir.resolve("build.gradle"))) {
+				versions.putLast(versionConf.getKey(), subProjectDir);
+			} else {
+				throw new Exception("Could not find build.gradle in " + subProjectDir.toString());
 			}
 		}
 		return versions;
@@ -130,5 +141,9 @@ public class Discombobulator implements Plugin<Project> {
 			total = 32;
 		}
 		return String.format("%s%s", " ".repeat(total - length / 2), text);
+	}
+
+	public static void printError(String line) {
+		System.err.println("\033[0;31m" + line + "\033[0m");
 	}
 }
