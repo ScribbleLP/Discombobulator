@@ -24,7 +24,7 @@ public abstract class PreprocessingConfiguration {
 	 * @return Ordered list of versions
 	 */
 	public abstract ListProperty<String> getVersions();
-	
+
 	/**
 	 * All patterns for the project.
 	 * <pre>
@@ -41,13 +41,13 @@ public abstract class PreprocessingConfiguration {
 	 * @return Map of patterns
 	 */
 	public abstract MapProperty<String, Map<String, String>> getPatterns();
-	
+
 	/**
 	 * If the default version should be inverted
 	 * @return True if inverted
 	 */
 	public abstract Property<Boolean> getInverted();
-	
+
 	/**
 	 * The port for the port lock
 	 * @return The port number

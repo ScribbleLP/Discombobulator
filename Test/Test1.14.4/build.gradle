@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.1-SNAPSHOT'
+	id 'fabric-loom' version '1.7-SNAPSHOT'
 }
 
 sourceCompatibility = targetCompatibility = 1.8
@@ -7,5 +7,5 @@ sourceCompatibility = targetCompatibility = 1.8
 dependencies {
 	minecraft "com.mojang:minecraft:1.14.4"
 	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:0.14.11"
+	modImplementation "net.fabricmc:fabric-loader:0.16.9"
 }

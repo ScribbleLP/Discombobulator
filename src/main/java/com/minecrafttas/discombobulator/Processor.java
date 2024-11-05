@@ -16,7 +16,6 @@ import com.minecrafttas.discombobulator.utils.Pair;
  * Start of with the "preprocess" method which is the only public method here.
  */
 
-
 /**
  * The main preprocessor component
  * @author Scribble
@@ -26,7 +25,7 @@ public class Processor {
 	private final Pattern regexBlocks = Pattern.compile("^\\s*\\/\\/ *(#+) *(.+)");
 	private final Pattern regexHashtag = Pattern.compile("^\\s*# *(#+) *(.+)");
 	private final Pattern regexPatterns = Pattern.compile("^.+\\/\\/ *@(.+);");
-	
+
 	private List<String> versions;
 	private Map<String, Map<String, String>> patterns;
 
@@ -34,18 +33,18 @@ public class Processor {
 	 * If the list should be inverted with the first one being the default
 	 */
 	private final boolean inverted;
-	
+
 	/**
 	 * Debug filename for errors during preprocessing
 	 */
 	private String filename = "undefined";
-	
+
 	/**
 	 * Debug linecount for errors during preprocessing
 	 */
 	private int linenumber = 0;
 	private Boolean versionEnabled = true;
-	
+
 	/**
 	 * Creates a new processor. The default will be the lowest version.
 	 * 
@@ -63,7 +62,7 @@ public class Processor {
 	public Processor(List<String> versions, Map<String, Map<String, String>> patterns) {
 		this(versions, patterns, false);
 	}
-	
+
 	/**
 	 * Creates a new processor. The order can be inverted.
 	 * <p> If inverted is true:
@@ -80,14 +79,14 @@ public class Processor {
 	 * @param patterns The patterns to check for in no specific order
 	 */
 	public Processor(List<String> versions, Map<String, Map<String, String>> patterns, boolean inverted) {
-		if(versions == null) {
+		if (versions == null) {
 			throw new NullPointerException("Versions can't be null!");
 		}
 		this.versions = versions;
 		this.patterns = patterns;
 		this.inverted = inverted;
 	}
-	
+
 	/**
 	 * Preprocesses the lines to a targeted version.
 	 * <p>Preprocessing can happen in 2 ways:<br>
@@ -200,50 +199,50 @@ public class Processor {
 		List<String> out = new ArrayList<>();
 		this.filename = filename;
 		this.linenumber = 0;
-		
-		if(targetVersion == null) {	// Enable the default version if targetversion is null. This is currently used when updating the base folder
+
+		if (targetVersion == null) { // Enable the default version if targetversion is null. This is currently used when updating the base folder
 			int defaultIndex = getIndex("def");
 			targetVersion = versions.get(defaultIndex);
 		}
-		
+
 		boolean useHashtags = shouldUseHashTag(fileending);
 		ConcurrentLinkedQueue<Boolean> enabledQueue = new ConcurrentLinkedQueue<>();
-		
+
 		for (String line : lines) {
 			linenumber++;
-			
+
 			// ====== Version Blocks
-			
-			if(containsStatement(line, useHashtags)) {
-				if(enabledQueue.isEmpty()) {
+
+			if (containsStatement(line, useHashtags)) {
+				if (enabledQueue.isEmpty()) {
 					enabledQueue = generateEnabledQueue(lines, useHashtags, targetVersion);
 				}
 			}
-			
+
 			line = preprocessVersionBlock(line, targetVersion, enabledQueue, useHashtags);
-			
+
 			// ====== Patterns
-			
+
 			if (patterns != null) {
 				line = preprocessPattern(line, targetVersion);
 			}
-			
+
 			// =====================
-			
+
 			out.add(line);
 		}
-		
+
 		return out;
 	}
-	
+
 	/*========================================================
- __      __           _               ____  _            _    
- \ \    / /          (_)             |  _ \| |          | |   
-  \ \  / /__ _ __ ___ _  ___  _ __   | |_) | | ___   ___| | __
-   \ \/ / _ \ '__/ __| |/ _ \| '_ \  |  _ <| |/ _ \ / __| |/ /
-    \  /  __/ |  \__ \ | (_) | | | | | |_) | | (_) | (__|   < 
-     \/ \___|_|  |___/_|\___/|_| |_| |____/|_|\___/ \___|_|\_\
-                                                              
+	__      __           _               ____  _            _    
+	\ \    / /          (_)             |  _ \| |          | |   
+	 \ \  / /__ _ __ ___ _  ___  _ __   | |_) | | ___   ___| | __
+	  \ \/ / _ \ '__/ __| |/ _ \| '_ \  |  _ <| |/ _ \ / __| |/ /
+	   \  /  __/ |  \__ \ | (_) | | | | | |_) | | (_) | (__|   < 
+	    \/ \___|_|  |___/_|\___/|_| |_| |____/|_|\___/ \___|_|\_\
+	                                                          
 	==========================================================
 	
 	*
@@ -260,12 +259,12 @@ public class Processor {
 	 * Generates a list of version blocks by prereading the block. To take nesting into account, it generates the lists recursively. Most of the error checking is done here.
 	 * <pre>
 	 * 1.16.1
-   	 * 	1.16.5	<- (Nested versions)
-   	 * 	1.17.1
-   	 * 	end
-   	 * 1.18.1
-   	 * def
-   	 * end
+	 * 	1.16.5	<- (Nested versions)
+	 * 	1.17.1
+	 * 	end
+	 * 1.18.1
+	 * def
+	 * end
 	 * </pre>
 	 * <h2>2.Sort by version index</h2>
 	 * For knowing what versions we have to enable, we first need to correctly sort the versions in the order as they appear in {@link #versions}
@@ -273,10 +272,10 @@ public class Processor {
 	 * 1.18.1
 	 * 1.16.1
 	 * 	1.17.1
-   	 * 	1.16.5
-   	 * 	end
-   	 * def
-   	 * end
+	 * 	1.16.5
+	 * 	end
+	 * def
+	 * end
 	 * </pre>
 	 * <h2>3.Enabling the version</h2>
 	 * Now we can correctly assign an enabled value to each version including the def and end blocks
@@ -285,10 +284,10 @@ public class Processor {
 	 * 1.18.1: false
 	 * 1.16.1: true
 	 * 	1.17.1: true
-   	 * 	1.16.5: false
-   	 * 	end: true
-   	 * def: false
-   	 * end: true
+	 * 	1.16.5: false
+	 * 	end: true
+	 * def: false
+	 * end: true
 	 * </pre>
 	 * <p>Note that the last end has to be true, since everything outside a version block list is enabled by default
 	 * <pre>
@@ -307,8 +306,8 @@ public class Processor {
 	 * 	1.17.1: true
 	 * 	end: true
 	 * 1.18.1: false
-   	 * def: false
-   	 * end: true
+	 * def: false
+	 * end: true
 	 * </pre>
 	 * <h2>Generating a queue from the versions</h2>
 	 * Now we can read out the booleans recursively and add them to a queue
@@ -328,19 +327,19 @@ public class Processor {
 	 * @throws Exception 
 	 */
 	private ConcurrentLinkedQueue<Boolean> generateEnabledQueue(List<String> lines, boolean useHashTag, String targetVersion) throws Exception {
-		
+
 		if (targetVersion != null && !versions.contains(targetVersion)) {
 			throw new RuntimeException(String.format("The target version %s was not found", targetVersion, filename, linenumber));
 		}
-		
-		VersionBlockList blockList = generateBlockList(lines, linenumber-1, useHashTag, 1, null).right();
+
+		VersionBlockList blockList = generateBlockList(lines, linenumber - 1, useHashTag, 1, null).right();
 		blockList.sortByVersionIndex();
 		blockList.setEnabledVersion(targetVersion);
 		blockList.sortByAppearence();
 //		System.out.println("=======================Target: "+targetVersion+"\n"+blockList);		// Enable this to print the blocks
 		return blockList.getQueue();
 	}
-	
+
 	/**
 	 * Parses the lines with the given start line recursively and returns a {@link VersionBlockList} with {@link VersionBlock} inside.<br>
 	 * Those VersionBlocks still have nested version lists
@@ -352,89 +351,86 @@ public class Processor {
 	 * @throws Exception If there are rule violations described in {@link #preprocess(String, List, String, String)}
 	 */
 	private Pair<Integer, VersionBlockList> generateBlockList(List<String> lines, int startLine, boolean useHashTag, int parentNestingLevel, VersionBlock parent) throws Exception {
-		
+
 		VersionBlockList blockList = new VersionBlockList();
 		int index = 0;
 		int lineCount;
-		
-		VersionBlock currentBlock=null;
-		
+
+		VersionBlock currentBlock = null;
+
 		/*Reading ahead and storing the version statements in blockList*/
-		for(lineCount = startLine; lineCount<lines.size(); lineCount++) {
-			
+		for (lineCount = startLine; lineCount < lines.size(); lineCount++) {
+
 			String line = lines.get(lineCount);
-			
+
 			/*Generate different matchers depending if the file uses hashtag as comments or not*/
 			Matcher matcher;
-			if(!useHashTag) {
+			if (!useHashTag) {
 				matcher = regexBlocks.matcher(line);
-			}else {
+			} else {
 				matcher = regexHashtag.matcher(line);
 			}
-			
-			if(!matcher.find()) {	// Skip if it can't find a version statement in this line. e.g. //# 1.12.2
+
+			if (!matcher.find()) { // Skip if it can't find a version statement in this line. e.g. //# 1.12.2
 				continue;
 			}
-			
+
 			/*Read the version statement*/
 			String version = matcher.group(2);
-			int level = matcher.group(1).length();	// Nesting level of this version statement
-			
+			int level = matcher.group(1).length(); // Nesting level of this version statement
+
 			/*Error checking*/
-			if(!version.equals("end") && !version.equals("def") && !versions.contains(version)) {
-				throw new RuntimeException(String.format("The specified version %s in %s in line %s was not found", version, filename, lineCount+1));
+			if (!version.equals("end") && !version.equals("def") && !versions.contains(version)) {
+				throw new RuntimeException(String.format("The specified version %s in %s in line %s was not found", version, filename, lineCount + 1));
 			}
-			
-			if(lineCount == startLine && version.equals("end")) {
-				throw new Exception(String.format("Unexpected 'end' found in line %s in %s", lineCount+1, filename));
+
+			if (lineCount == startLine && version.equals("end")) {
+				throw new Exception(String.format("Unexpected 'end' found in line %s in %s", lineCount + 1, filename));
 			}
-			
+
 			/*Nesting*/
 			Pair<Integer, VersionBlockList> nestedVersions = null;
-			
-			if(level == parentNestingLevel+1) {	// If the new nesting level is higher than the nesting level of the parent block
-				
+
+			if (level == parentNestingLevel + 1) { // If the new nesting level is higher than the nesting level of the parent block
+
 				checkForNestingErrors(version, currentBlock.version, level, lineCount);
-				
-				nestedVersions = generateBlockList(lines, lineCount, useHashTag, level, currentBlock);	// Start recursion to generate the blockList in the next nesting level
-				lineCount = nestedVersions.left();	// nestedVersions.left()=lineCount from nested versions. Since we already processed these lines in the recursion we can skip these lines here.
-				
-				if(!nestedVersions.right().isEmpty()) {
-					currentBlock.addNestedVersionBlockList(nestedVersions.right());	// Add nested versions to the parent block
+
+				nestedVersions = generateBlockList(lines, lineCount, useHashTag, level, currentBlock); // Start recursion to generate the blockList in the next nesting level
+				lineCount = nestedVersions.left(); // nestedVersions.left()=lineCount from nested versions. Since we already processed these lines in the recursion we can skip these lines here.
+
+				if (!nestedVersions.right().isEmpty()) {
+					currentBlock.addNestedVersionBlockList(nestedVersions.right()); // Add nested versions to the parent block
 				}
-			}
-			else if(level == parentNestingLevel) {	// If the level stays the same
-				if(currentBlock!=null) {
+			} else if (level == parentNestingLevel) { // If the level stays the same
+				if (currentBlock != null) {
 					index++; // Increase the blockList index
-					
+
 					blockList.addBlock(currentBlock);
 				}
 				currentBlock = new VersionBlock(parent, version, index, level);
+			} else if (level == parentNestingLevel - 1) {
+				throw new Exception(String.format("Missing an end for nesting before line %s in %s", lineCount + 1, filename));
+			} else {
+				throw new Exception(String.format("Unexpected nesting level in line %s in %s", lineCount + 1, filename));
 			}
-			else if(level == parentNestingLevel-1) {
-				throw new Exception(String.format("Missing an end for nesting before line %s in %s", lineCount+1, filename));
+
+			if (blockList.contains(version)) {
+				throw new Exception(String.format("Duplicate version definition %s found in line %s in %s", version, lineCount + 1, filename));
 			}
-			else {
-				throw new Exception(String.format("Unexpected nesting level in line %s in %s", lineCount+1, filename));
-			}
-			
-			if(blockList.contains(version)) {
-				throw new Exception(String.format("Duplicate version definition %s found in line %s in %s", version, lineCount+1, filename));
-			}
-			
+
 			/*End condition*/
-			if(version.equals("end") && level == parentNestingLevel) {	
+			if (version.equals("end") && level == parentNestingLevel) {
 				blockList.addBlock(currentBlock);
 				break;
 			}
-			
+
 		}
 		return Pair.of(lineCount, blockList);
 	}
-	
+
 	private int getIndex(String version) {
 		int versionIndex = versions.indexOf(version);
-		if("def".equals(version)) {
+		if ("def".equals(version)) {
 			if (!inverted)
 				versionIndex = versions.size() - 1;
 			else
@@ -509,7 +505,7 @@ public class Processor {
 		 * The parent version block, used for getting parent information in the nesting block. Null if this block is in the first nesting level and doesn't have a parent.
 		 */
 		private VersionBlock parent;
-		
+
 		/**
 		 * @see VersionBlock
 		 * @param parent
@@ -523,7 +519,7 @@ public class Processor {
 			this.index = index;
 			this.level = level;
 		}
-		
+
 		/**
 		 * Adds a {@linkplain VersionBlockList} as a child block list to this VersionBlock.
 		 * @param blocks
@@ -531,28 +527,28 @@ public class Processor {
 		public void addNestedVersionBlockList(VersionBlockList blocks) {
 			nestedBlockLists.add(blocks);
 		}
-		
+
 		@Override
 		public String toString() {
-			String out = "   ".repeat(level-1)+version+": "+enabled+"\n";
-			for(VersionBlockList list : nestedBlockLists) {
-				out=out.concat(list.toString());
+			String out = "   ".repeat(level - 1) + version + ": " + enabled + "\n";
+			for (VersionBlockList list : nestedBlockLists) {
+				out = out.concat(list.toString());
 			}
 			return out;
 		}
-		
+
 		/**
 		 * Recursively gets the size
 		 * @return The number of version block statements
 		 */
 		public int size() {
 			int i = 1; // This block
-			for(VersionBlockList list : nestedBlockLists) {
-				i=i+list.size();
+			for (VersionBlockList list : nestedBlockLists) {
+				i = i + list.size();
 			}
 			return i;
 		}
-		
+
 		/**
 		 * Returns the version index of this versionBlock used for sorting.
 		 * 
@@ -579,46 +575,46 @@ public class Processor {
 		 * @return The index of the specified version from {@linkplain Processor#versions}
 		 */
 		public int getVersionIndex() {
-			if(version.equals("end")) {	// Special behaviour if the version is "end"
-				if(!inverted)
+			if (version.equals("end")) { // Special behaviour if the version is "end"
+				if (!inverted)
 					return versions.size();
 				else
 					return -1;
 			}
-			if(version.equals("def") && parent != null) {	// If this is a nested block and version is def, use the parent version. This also works recursively
+			if (version.equals("def") && parent != null) { // If this is a nested block and version is def, use the parent version. This also works recursively
 				return parent.getVersionIndex();
 			}
 			return getIndex(version);
 		}
-		
+
 		//====================================== Sorting
-		
+
 		/**
 		 * Sorts the {@link #nestedBlockLists} by version index recursively
 		 * @see VersionBlockList#sortByVersionIndex()
 		 */
 		public void sortByVersionIndex() {
-			for(VersionBlockList list : nestedBlockLists) {
+			for (VersionBlockList list : nestedBlockLists) {
 				list.sortByVersionIndex();
 			}
 		}
-		
+
 		/**
 		 * Sorts the {@link #nestedBlockLists} by {@link #index} recursively
 		 * @see VersionBlockList#sortByAppearence()
 		 */
 		public void sortByAppearence() {
-			for(VersionBlockList list : nestedBlockLists) {
+			for (VersionBlockList list : nestedBlockLists) {
 				list.sortByAppearence();
 			}
 		}
-		
+
 		//====================================== Enable/Disable
-		
+
 		public void setEnabled(boolean enabled) {
 			this.enabled = enabled;
 		}
-		
+
 		public void setEnabledVersion(String targetVersion) {
 			for (VersionBlockList versionBlockList : nestedBlockLists) {
 				versionBlockList.setEnabledVersion(targetVersion);
@@ -636,9 +632,9 @@ public class Processor {
 			}
 			return out;
 		}
-		
+
 	}
-	
+
 	/**
 	 * <p>A list of {@linkplain VersionBlock}s. Version block lists start with a version block of any version and end with a version block of "end":
 	 * <pre>
@@ -657,110 +653,109 @@ public class Processor {
 	 */
 	private class VersionBlockList {
 		private List<VersionBlock> blocks = new ArrayList<>();
-		
+
 		public void addBlock(VersionBlock block) {
 			blocks.add(block);
 		}
-		
+
 		public boolean isEmpty() {
 			return blocks.isEmpty();
 		}
-		
+
 		@Override
 		public String toString() {
-			String out="";
-			for(VersionBlock block : blocks) {
-				out=out.concat(block.toString());
+			String out = "";
+			for (VersionBlock block : blocks) {
+				out = out.concat(block.toString());
 			}
 			return out;
 		}
-		
+
 		public int size() {
 			int i = 0;
-			for(VersionBlock block : blocks) {
+			for (VersionBlock block : blocks) {
 				i = i + block.size();
 			}
 			return i;
 		}
-		
+
 		public boolean contains(String version) {
 			for (VersionBlock block : blocks) {
-				if(block.version.equals(version)) {
+				if (block.version.equals(version)) {
 					return true;
 				}
 			}
 			return false;
 		}
-		
+
 		//====================================== Sorting
-		
+
 		/**
 		 * Sorts all blocks by the order of when they appear in {@linkplain Processor#versions}
 		 */
 		public void sortByVersionIndex() {
-			blocks.sort((left, right)->{
+			blocks.sort((left, right) -> {
 				int compare = Integer.compare(left.getVersionIndex(), right.getVersionIndex());
-				if(inverted)
+				if (inverted)
 					compare = Integer.compare(right.getVersionIndex(), left.getVersionIndex());
 				return compare;
 			});
-			for(VersionBlock block : blocks) {
-				block.sortByVersionIndex();	// Start of recursive sorting
+			for (VersionBlock block : blocks) {
+				block.sortByVersionIndex(); // Start of recursive sorting
 			}
 		}
-		
+
 		/**
 		 * Sorts all blocks by the order of the {@linkplain VersionBlock#index}
 		 */
 		public void sortByAppearence() {
-			blocks.sort((left, right)->{
+			blocks.sort((left, right) -> {
 				int compare = Integer.compare(left.index, right.index);
 				return compare;
 			});
-			for(VersionBlock block : blocks) {
+			for (VersionBlock block : blocks) {
 				block.sortByAppearence(); // Start of recursive sorting
 			}
 		}
-		
+
 		//====================================== Enable/Disable
-		
+
 		/**
 		 * Main logic of enabeling/disabeling versions and searching through the list
 		 * @param targetVersion
 		 */
 		public void setEnabledVersion(String targetVersion) {
 			int targetIndex = getIndex(targetVersion);
-			
+
 			boolean found = false;
-			
+
 			for (VersionBlock block : blocks) {
-				
+
 				int currentIndex = block.getVersionIndex();
-				
+
 				boolean enabled = false; // Whether the current block is enabled or not
-				
-				if(block.version.equals("end")) {	// If the version equals end
-					if(block.parent != null) {
-						enabled = block.parent.enabled;	// If we are inside a nested block, we will return to the parent block after the end, 
+
+				if (block.version.equals("end")) { // If the version equals end
+					if (block.parent != null) {
+						enabled = block.parent.enabled; // If we are inside a nested block, we will return to the parent block after the end, 
 														// therefore we have to set it enabled according to the parent version
-					}
-					else {
-						enabled=true;		// If this block is the last end in the list, set it to true. See javadoc for generateEnableQueue under Step 3
+					} else {
+						enabled = true; // If this block is the last end in the list, set it to true. See javadoc for generateEnableQueue under Step 3
 					}
 				}
-				
-				else if(targetVersion == null) {	// If the targetVersion is null, nothing inside a version block should be enabled
+
+				else if (targetVersion == null) { // If the targetVersion is null, nothing inside a version block should be enabled
 					enabled = false;
 				}
-				
-				else if(block.parent != null && !block.parent.enabled) {		// If the parent is disabled, the nested block should not be enabled as well.
+
+				else if (block.parent != null && !block.parent.enabled) { // If the parent is disabled, the nested block should not be enabled as well.
 					enabled = false;
 				}
-				
-				else {	// Searching for the target version
-					if ((currentIndex < targetIndex && !inverted) || (currentIndex > targetIndex && inverted)) {	// If the target is still too high/too low continue searching
+
+				else { // Searching for the target version
+					if ((currentIndex < targetIndex && !inverted) || (currentIndex > targetIndex && inverted)) { // If the target is still too high/too low continue searching
 						enabled = false;
-					} else if (currentIndex == targetIndex) {	// If there is a target version matching, set it to found
+					} else if (currentIndex == targetIndex) { // If there is a target version matching, set it to found
 						enabled = true;
 						found = true;
 					} else {
@@ -776,36 +771,36 @@ public class Processor {
 				block.setEnabledVersion(targetVersion); // Start of recursive actions
 			}
 		}
-		
+
 		//====================================== Queue Generation
-		
-		public ConcurrentLinkedQueue<Boolean> getQueue(){
+
+		public ConcurrentLinkedQueue<Boolean> getQueue() {
 			ConcurrentLinkedQueue<Boolean> out = new ConcurrentLinkedQueue<Boolean>();
-			for(VersionBlock block: blocks) {
+			for (VersionBlock block : blocks) {
 				out.add(block.enabled);
 				out.addAll(block.getQueue());
 			}
-			
+
 			return out;
 		}
 		//========================================================
 	}
-	
+
 	private boolean shouldUseHashTag(String fileending) {
 		return "accesswidener".equals(fileending);
 	}
-	
+
 	private String preprocessVersionBlock(String line, String targetVersion, ConcurrentLinkedQueue<Boolean> enabledQueue, boolean useHashTag) throws Exception {
 		if (containsStatement(line, useHashTag)) {
 			versionEnabled = enabledQueue.poll();
 			return line;
 		}
-		if(versionEnabled == null) {
+		if (versionEnabled == null) {
 			versionEnabled = true;
 		}
 		return enableLine(line, versionEnabled, useHashTag);
 	}
-	
+
 	/**
 	 * @param line The line to check
 	 * @param useHashTags Whether to search for hashtags or // as comments
@@ -822,36 +817,35 @@ public class Processor {
 	 * @return The new line
 	 */
 	private String enableLine(String line, boolean enable, boolean useHashTag) {
-		
+
 		String commentChars = "//";
-		if(useHashTag) {
+		if (useHashTag) {
 			commentChars = "#";
 		}
-		
-		boolean isDisabled = line.startsWith(commentChars+"$$");
+
+		boolean isDisabled = line.startsWith(commentChars + "$$");
 		if (enable)
-			return isDisabled ? line.replace(commentChars+"$$", "") : line;
+			return isDisabled ? line.replace(commentChars + "$$", "") : line;
 		else
-			return isDisabled ? line : commentChars+"$$" + line;
+			return isDisabled ? line : commentChars + "$$" + line;
 	}
 
 	private void checkForNestingErrors(String nestedVer, String parentVer, int nestingLevel, int lineCount) throws Exception {
-		
-		if(nestedVer.equals("end")) {
-			throw new Exception(String.format("Unexpected 'end' in nested block found in line %s in %s", lineCount+1, filename));
+
+		if (nestedVer.equals("end")) {
+			throw new Exception(String.format("Unexpected 'end' in nested block found in line %s in %s", lineCount + 1, filename));
 		}
-		
+
 		int nestedIndex = getIndex(nestedVer);
 		int parentIndex = getIndex(parentVer);
-		
-		if(nestedIndex>parentIndex && !inverted && !nestedVer.equals("def")) {
-			throw new Exception(String.format("The version in the nesting block is smaller than in the parent block. Nested: %s, Parent: %s, Line: %s, File: %s", nestedVer, parentVer, lineCount+1, filename));
-		}
-		else if(nestedIndex<parentIndex && inverted && !nestedVer.equals("def")) {
-			throw new Exception(String.format("The version in the nesting block is greater than in the parent block. Nested: %s, Parent: %s, Line: %s, File: %s", nestedVer, parentVer, lineCount+1, filename));
+
+		if (nestedIndex > parentIndex && !inverted && !nestedVer.equals("def")) {
+			throw new Exception(String.format("The version in the nesting block is smaller than in the parent block. Nested: %s, Parent: %s, Line: %s, File: %s", nestedVer, parentVer, lineCount + 1, filename));
+		} else if (nestedIndex < parentIndex && inverted && !nestedVer.equals("def")) {
+			throw new Exception(String.format("The version in the nesting block is greater than in the parent block. Nested: %s, Parent: %s, Line: %s, File: %s", nestedVer, parentVer, lineCount + 1, filename));
 		}
 	}
-	
+
 	/*========================================================
 		  _____      _   _                      
 		 |  __ \    | | | |                     
@@ -859,14 +853,14 @@ public class Processor {
 		 |  ___/ _` | __| __/ _ \ '__| '_ \/ __|
 		 | |  | (_| | |_| ||  __/ |  | | | \__ \
 		 |_|   \__,_|\__|\__\___|_|  |_| |_|___/
-                                                              
+	                                                          
 	==========================================================
 	
 	* Everything related to patterns can be found here.
 	*/
-	
+
 	private String preprocessPattern(String line, String targetVersion) {
-		
+
 		Matcher match = this.regexPatterns.matcher(line);
 		if (!match.find()) {
 			return line;
@@ -903,21 +897,21 @@ public class Processor {
 
 		return line;
 	}
-	
+
 	/**
 	 * Split the pattern names and get the patterns
 	 * @param patternnames Names to split
 	 * @return A list of mapped patterns
 	 */
-	private List<Map<String, String>> getPatterns(String patternnames){
-		
-		List<Map<String, String>> out = new ArrayList<>();
-		
-		String[] split = patternnames.split(","); 			// Split the names
+	private List<Map<String, String>> getPatterns(String patternnames) {
 
-		for(String names : split) {
-			names = names.trim();	// trim any spaces
-			
+		List<Map<String, String>> out = new ArrayList<>();
+
+		String[] split = patternnames.split(","); // Split the names
+
+		for (String names : split) {
+			names = names.trim(); // trim any spaces
+
 			Map<String, String> pattern = this.patterns.get(names);
 			if (pattern == null) {
 				System.out.println(String.format("The specified pattern %s in %s in line %s was not found", names, filename, linenumber));
@@ -942,30 +936,30 @@ public class Processor {
 	 * @return The string that should replace the pattern in the line. Null if no pattern was found.
 	 */
 	private String findReplacement(Map<String, String> pattern, String targetVersion) {
-		
+
 		String replacement = pattern.get(targetVersion);
-		
-		if(replacement!=null) { // Optimization if the target version has a matching pattern
+
+		if (replacement != null) { // Optimization if the target version has a matching pattern
 			return replacement;
 		}
-		
+
 		int targetIndex = this.versions.indexOf(targetVersion); // Get the targetIndex
-		
-		if(!inverted) {
+
+		if (!inverted) {
 			replacement = searchPatterns(targetIndex, pattern);
 		} else {
 			replacement = searchPatternsInverted(targetIndex, pattern);
 		}
-		
-		if(replacement==null) {	// If there was no version found
-			if(pattern.containsKey("def")) {	// Use default as replacement
+
+		if (replacement == null) { // If there was no version found
+			if (pattern.containsKey("def")) { // Use default as replacement
 				replacement = pattern.get("def");
 			}
 		}
-		
+
 		return replacement;
 	}
-	
+
 	/**
 	 * Search through versions lower than the targetVersion for a fitting version.
 	 * 
@@ -979,16 +973,16 @@ public class Processor {
 	private String searchPatterns(int targetIndex, Map<String, String> pattern) {
 		String replacement = null;
 
-		for (int currentIndex = versions.size()-1; currentIndex > targetIndex; currentIndex--) {
+		for (int currentIndex = versions.size() - 1; currentIndex > targetIndex; currentIndex--) {
 			String currentVersion = versions.get(currentIndex);
-			
-			if(pattern.containsKey(currentVersion)) {
-				replacement=pattern.get(currentVersion);
+
+			if (pattern.containsKey(currentVersion)) {
+				replacement = pattern.get(currentVersion);
 			}
 		}
 		return replacement;
 	}
-	
+
 	/**
 	 * Search through versions higher than the targetVersion for a fitting version.
 	 * 
@@ -1004,12 +998,11 @@ public class Processor {
 
 		for (int currentIndex = 0; currentIndex < targetIndex; currentIndex++) {
 			String currentVersion = versions.get(currentIndex);
-			
-			if(pattern.containsKey(currentVersion)) {
-				replacement=pattern.get(currentVersion);
+
+			if (pattern.containsKey(currentVersion)) {
+				replacement = pattern.get(currentVersion);
 			}
 		}
 		return replacement;
 	}
-	
 }
