@@ -172,9 +172,10 @@ public class TaskPreprocessWatch extends DefaultTask {
 					for (Entry<String, Path> versionPair : versions.entrySet()) {
 						String versionName = versionPair.getKey();
 						Path targetProject = versionPair.getValue();
+						Path targetSubSourceDir = targetProject.resolve("src");
 
 						// Write file
-						Path outFile = targetProject.resolve(inFile);
+						Path outFile = targetSubSourceDir.resolve(inFile);
 
 						if (ignore) {
 							Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
