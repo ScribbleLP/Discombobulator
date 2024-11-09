@@ -186,7 +186,7 @@ public class TaskPreprocessWatch extends DefaultTask {
 						List<String> outLines = Discombobulator.processor.preprocess(versionName, linesToProcess, filename, extension);
 
 						// If the version equals the original version, then skip it
-						if (targetProject.equals(subSourceDir)) {
+						if (targetSubSourceDir.equals(subSourceDir)) {
 							currentFileUpdater = Triple.of(outLines, path, outFile);
 							continue;
 						}
