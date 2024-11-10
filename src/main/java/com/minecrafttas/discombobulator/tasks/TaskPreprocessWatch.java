@@ -172,9 +172,10 @@ public class TaskPreprocessWatch extends DefaultTask {
 					for (Entry<String, Path> versionPair : versions.entrySet()) {
 						String versionName = versionPair.getKey();
 						Path targetProject = versionPair.getValue();
+						Path targetSubSourceDir = targetProject.resolve("src");
 
 						// Write file
-						Path outFile = targetProject.resolve(inFile);
+						Path outFile = targetSubSourceDir.resolve(inFile);
 
 						if (ignore) {
 							Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
@@ -185,7 +186,7 @@ public class TaskPreprocessWatch extends DefaultTask {
 						List<String> outLines = Discombobulator.processor.preprocess(versionName, linesToProcess, filename, extension);
 
 						// If the version equals the original version, then skip it
-						if (targetProject.equals(subSourceDir)) {
+						if (targetSubSourceDir.equals(subSourceDir)) {
 							currentFileUpdater = Triple.of(outLines, path, outFile);
 							continue;
 						}
