@@ -34,7 +34,7 @@ class ProcessorTestPatterns extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -56,7 +56,7 @@ class ProcessorTestPatterns extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -78,7 +78,7 @@ class ProcessorTestPatterns extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -100,7 +100,7 @@ class ProcessorTestPatterns extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -123,10 +123,10 @@ class ProcessorTestPatterns extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("The specified pattern  GetMinecraft , GetLevel in Actual3.java in line 		Minecraft.getInstance(); // @ GetMinecraft , GetLevel; was not found for any version", exception.getMessage());
+		assertEquals("The specified pattern  GetMinecraft , GetLevel in line 		Minecraft.getInstance(); // @ GetMinecraft , GetLevel; was not found for any version", exception.getMessage());
 	}
 
 }

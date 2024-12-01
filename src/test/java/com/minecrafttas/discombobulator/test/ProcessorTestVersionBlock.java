@@ -31,7 +31,7 @@ class ProcessorTestVersionBlock extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -53,7 +53,7 @@ class ProcessorTestVersionBlock extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -75,7 +75,7 @@ class ProcessorTestVersionBlock extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -97,7 +97,7 @@ class ProcessorTestVersionBlock extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -120,10 +120,10 @@ class ProcessorTestVersionBlock extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("The target version 1.21 was not found", exception.getMessage());
+		assertEquals("The target version 1.21 was not found in line 4", exception.getMessage());
 	}
 
 	/**
@@ -141,10 +141,10 @@ class ProcessorTestVersionBlock extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("The specified version CrazyVersionName in Actual.java in line 6 was not found", exception.getMessage());
+		assertEquals("The specified version CrazyVersionName in line 6 was not found", exception.getMessage());
 	}
 
 	/**
@@ -161,7 +161,7 @@ class ProcessorTestVersionBlock extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -184,10 +184,10 @@ class ProcessorTestVersionBlock extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Unexpected 'end' found in line 11 in Actual2.java", exception.getMessage());
+		assertEquals("Unexpected 'end' found in line 11", exception.getMessage());
 	}
 
 	/**
@@ -205,9 +205,9 @@ class ProcessorTestVersionBlock extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Duplicate version definition 1.16.1 found in line 8 in Actual3.java", exception.getMessage());
+		assertEquals("Duplicate version definition 1.16.1 found in line 8", exception.getMessage());
 	}
 }

@@ -30,7 +30,7 @@ class TestOrdering extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -53,7 +53,7 @@ class TestOrdering extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -76,7 +76,7 @@ class TestOrdering extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());

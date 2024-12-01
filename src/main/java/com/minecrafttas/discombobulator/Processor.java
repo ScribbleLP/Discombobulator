@@ -35,11 +35,6 @@ public class Processor {
 	private final boolean inverted;
 
 	/**
-	 * Debug filename for errors during preprocessing
-	 */
-	private String filename = "undefined";
-
-	/**
 	 * Debug linecount for errors during preprocessing
 	 */
 	private int linenumber = 0;
@@ -195,9 +190,8 @@ public class Processor {
 	 * @return The preprocessed lines of the file
 	 * @throws Exception 
 	 */
-	public List<String> preprocess(String targetVersion, List<String> lines, String filename, String fileending) throws Exception {
+	public List<String> preprocess(String targetVersion, List<String> lines, String fileending) throws Exception {
 		List<String> out = new ArrayList<>();
-		this.filename = filename;
 		this.linenumber = 0;
 
 		if (targetVersion == null) { // Enable the default version if targetversion is null. This is currently used when updating the base folder
@@ -329,7 +323,7 @@ public class Processor {
 	private ConcurrentLinkedQueue<Boolean> generateEnabledQueue(List<String> lines, boolean useHashTag, String targetVersion) throws Exception {
 
 		if (targetVersion != null && !versions.contains(targetVersion)) {
-			throw new RuntimeException(String.format("The target version %s was not found", targetVersion, filename, linenumber));
+			throw new RuntimeException(String.format("The target version %s was not found in line %s", targetVersion, linenumber));
 		}
 
 		VersionBlockList blockList = generateBlockList(lines, linenumber - 1, useHashTag, 1, null).right();
@@ -381,11 +375,11 @@ public class Processor {
 
 			/*Error checking*/
 			if (!version.equals("end") && !version.equals("def") && !versions.contains(version)) {
-				throw new RuntimeException(String.format("The specified version %s in %s in line %s was not found", version, filename, lineCount + 1));
+				throw new RuntimeException(String.format("The specified version %s in line %s was not found", version, lineCount + 1));
 			}
 
 			if (lineCount == startLine && version.equals("end")) {
-				throw new Exception(String.format("Unexpected 'end' found in line %s in %s", lineCount + 1, filename));
+				throw new Exception(String.format("Unexpected 'end' found in line %s", lineCount + 1));
 			}
 
 			/*Nesting*/
@@ -409,13 +403,13 @@ public class Processor {
 				}
 				currentBlock = new VersionBlock(parent, version, index, level);
 			} else if (level == parentNestingLevel - 1) {
-				throw new Exception(String.format("Missing an end for nesting before line %s in %s", lineCount + 1, filename));
+				throw new Exception(String.format("Missing an end for nesting before line %s", lineCount + 1));
 			} else {
-				throw new Exception(String.format("Unexpected nesting level in line %s in %s", lineCount + 1, filename));
+				throw new Exception(String.format("Unexpected nesting level in line %s", lineCount + 1));
 			}
 
 			if (blockList.contains(version)) {
-				throw new Exception(String.format("Duplicate version definition %s found in line %s in %s", version, lineCount + 1, filename));
+				throw new Exception(String.format("Duplicate version definition %s found in line %s", version, lineCount + 1));
 			}
 
 			/*End condition*/
@@ -833,16 +827,16 @@ public class Processor {
 	private void checkForNestingErrors(String nestedVer, String parentVer, int nestingLevel, int lineCount) throws Exception {
 
 		if (nestedVer.equals("end")) {
-			throw new Exception(String.format("Unexpected 'end' in nested block found in line %s in %s", lineCount + 1, filename));
+			throw new Exception(String.format("Unexpected 'end' in nested block found in line %s", lineCount + 1));
 		}
 
 		int nestedIndex = getIndex(nestedVer);
 		int parentIndex = getIndex(parentVer);
 
 		if (nestedIndex > parentIndex && !inverted && !nestedVer.equals("def")) {
-			throw new Exception(String.format("The version in the nesting block is smaller than in the parent block. Nested: %s, Parent: %s, Line: %s, File: %s", nestedVer, parentVer, lineCount + 1, filename));
+			throw new Exception(String.format("The version in the nesting block is smaller than in the parent block. Nested: %s, Parent: %s, Line: %s", nestedVer, parentVer, lineCount + 1));
 		} else if (nestedIndex < parentIndex && inverted && !nestedVer.equals("def")) {
-			throw new Exception(String.format("The version in the nesting block is greater than in the parent block. Nested: %s, Parent: %s, Line: %s, File: %s", nestedVer, parentVer, lineCount + 1, filename));
+			throw new Exception(String.format("The version in the nesting block is greater than in the parent block. Nested: %s, Parent: %s, Line: %s", nestedVer, parentVer, lineCount + 1));
 		}
 	}
 
@@ -873,7 +867,7 @@ public class Processor {
 		for (Map<String, String> pattern : patterns) { // Iterate through multiple patterns
 			String replacement = findReplacement(pattern, targetVersion);
 			if (replacement == null) {
-				throw new RuntimeException(String.format("The specified pattern %s in %s in line %s was not found for target version %s", patternNames, filename, linenumber, targetVersion));
+				throw new RuntimeException(String.format("The specified pattern %s in line %s was not found for target version %s", patternNames, linenumber, targetVersion));
 			}
 
 			if (line.contains(replacement)) { // Optimization, if the targetversion is already the correct
@@ -890,7 +884,7 @@ public class Processor {
 			}
 
 			if (replaceable == null)
-				throw new RuntimeException(String.format("The specified pattern %s in %s in line %s was not found for any version", patternNames, filename, line));
+				throw new RuntimeException(String.format("The specified pattern %s in line %s was not found for any version", patternNames, line));
 
 			line = line.replace(replaceable, replacement);
 		}
@@ -914,7 +908,7 @@ public class Processor {
 
 			Map<String, String> pattern = this.patterns.get(names);
 			if (pattern == null) {
-				System.out.println(String.format("The specified pattern %s in %s in line %s was not found", names, filename, linenumber));
+				System.out.println(String.format("The specified pattern %s in line %s was not found", names, linenumber));
 				continue;
 			}
 			out.add(pattern);

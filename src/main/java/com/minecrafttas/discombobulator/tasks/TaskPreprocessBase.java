@@ -2,11 +2,8 @@ package com.minecrafttas.discombobulator.tasks;
 
 import java.io.FileFilter;
 import java.io.IOException;
-import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,6 +14,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
+import com.minecrafttas.discombobulator.PreprocessOperations;
 import com.minecrafttas.discombobulator.utils.BetterFileWalker;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.SocketLock;
@@ -72,32 +70,9 @@ public class TaskPreprocessBase extends DefaultTask {
 					Path outFile = subSourceDir.resolve(path);
 					String version = versionPairs.getKey();
 
-//					System.out.println(inFile);
-//					System.out.println(outFile+"\n");
-
-					if (fileFilter.accept(inFile.toFile())) {
-						System.out.println(String.format("Ignoring %s", inFile.getFileName().toString()));
-						Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-						continue;
-					}
-
-					// Preprocess file
 					String extension = FilenameUtils.getExtension(path.getFileName().toString());
 
-					List<String> linesToProcess;
-					try {
-						linesToProcess = Files.readAllLines(inFile);
-					} catch (MalformedInputException e) {
-						Discombobulator.printError(String.format("Can't process the specified file, probably not a text file: %s\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", inFile.getFileName(), extension));
-						continue;
-					}
-
-					List<String> lines = Discombobulator.processor.preprocess(version, linesToProcess, path.getFileName().toString(), extension);
-
-					// Write file and update last modified date
-					Files.createDirectories(outFile.getParent());
-					SafeFileOperations.write(outFile, lines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-					Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(inFile));
+					PreprocessOperations.preprocessFile(inFile, outFile, version, fileFilter, extension);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

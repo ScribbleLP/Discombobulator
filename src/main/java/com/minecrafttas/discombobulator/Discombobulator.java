@@ -18,7 +18,7 @@ import com.minecrafttas.discombobulator.extensions.PreprocessingConfiguration;
 import com.minecrafttas.discombobulator.tasks.TaskCollectBuilds;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessBase;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessVersion;
-import com.minecrafttas.discombobulator.tasks.TaskPreprocessWatch;
+import com.minecrafttas.discombobulator.tasks.TaskPreprocessWatch2;
 
 /**
  * Gradle plugin main class
@@ -54,7 +54,7 @@ public class Discombobulator implements Plugin<Project> {
 		baseTask.setGroup("discombobulator");
 		baseTask.setDescription("Split base source into seperate version folders");
 
-		TaskPreprocessWatch watchTask = project.getTasks().register("preprocessWatch", TaskPreprocessWatch.class).get();
+		TaskPreprocessWatch2 watchTask = project.getTasks().register("preprocessWatch", TaskPreprocessWatch2.class).get();
 		watchTask.setGroup("discombobulator");
 		watchTask.setDescription("Starts a watch session. Preprocesses files into other versions on file change.");
 
@@ -150,5 +150,9 @@ public class Discombobulator implements Plugin<Project> {
 
 	public static void printError(String line) {
 		System.err.println("\033[0;31m" + line + "\033[0m");
+	}
+	
+	public static void printError(String line, String filename) {
+		printError(String.format("[%s] %s", filename, line));
 	}
 }

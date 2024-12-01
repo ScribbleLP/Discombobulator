@@ -31,7 +31,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -53,7 +53,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -75,7 +75,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -97,7 +97,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -119,7 +119,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -136,7 +136,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -153,7 +153,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -170,7 +170,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -194,7 +194,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), "Actual", getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -216,7 +216,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), "Actual", getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -238,7 +238,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), "Actual", getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -260,7 +260,7 @@ class TestVersionNesting extends TestBase {
 
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
-		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), "Actual", getExtension(actualName));
+		List<String> linesActual = processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 
 		String actual = String.join("\n", linesActual);
 		String expected = String.join("\n", lines.right());
@@ -285,10 +285,10 @@ class TestVersionNesting extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("The version in the nesting block is smaller than in the parent block. Nested: infinity, Parent: 1.20.0, Line: 10, File: Actual2.java", exception.getMessage());
+		assertEquals("The version in the nesting block is smaller than in the parent block. Nested: infinity, Parent: 1.20.0, Line: 10", exception.getMessage());
 	}
 
 	/**
@@ -306,10 +306,10 @@ class TestVersionNesting extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Unexpected 'end' in nested block found in line 14 in Actual3.java", exception.getMessage());
+		assertEquals("Unexpected 'end' in nested block found in line 14", exception.getMessage());
 	}
 
 	/**
@@ -327,10 +327,10 @@ class TestVersionNesting extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Missing an end for nesting before line 13 in Actual4.java", exception.getMessage());
+		assertEquals("Missing an end for nesting before line 13", exception.getMessage());
 	}
 
 	/**
@@ -348,10 +348,10 @@ class TestVersionNesting extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Unexpected nesting level in line 10 in Actual5.java", exception.getMessage());
+		assertEquals("Unexpected nesting level in line 10", exception.getMessage());
 	}
 
 	/**
@@ -369,10 +369,10 @@ class TestVersionNesting extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Unexpected nesting level in line 14 in Actual6.java", exception.getMessage());
+		assertEquals("Unexpected nesting level in line 14", exception.getMessage());
 	}
 
 	/**
@@ -390,10 +390,10 @@ class TestVersionNesting extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Duplicate version definition 1.18.2 found in line 14 in Actual7.java", exception.getMessage());
+		assertEquals("Duplicate version definition 1.18.2 found in line 14", exception.getMessage());
 	}
 
 	/**
@@ -411,9 +411,9 @@ class TestVersionNesting extends TestBase {
 		Pair<List<String>, List<String>> lines = getLines(folder, actualName, expectedName);
 
 		Exception exception = assertThrows(Exception.class, () -> {
-			processor.preprocess(targetVersion, lines.left(), actualName, getExtension(actualName));
+			processor.preprocess(targetVersion, lines.left(), getExtension(actualName));
 		});
 
-		assertEquals("Duplicate version definition def found in line 16 in Actual8.java", exception.getMessage());
+		assertEquals("Duplicate version definition def found in line 16", exception.getMessage());
 	}
 }

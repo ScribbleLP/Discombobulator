@@ -5,7 +5,6 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +19,7 @@ import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.PathLock;
+import com.minecrafttas.discombobulator.PreprocessOperations;
 import com.minecrafttas.discombobulator.utils.FileWatcher;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.SocketLock;
@@ -30,7 +30,7 @@ import com.minecrafttas.discombobulator.utils.Triple;
  * 
  * @author Pancake
  */
-public class TaskPreprocessWatch extends DefaultTask {
+public class TaskPreprocessWatch2 extends DefaultTask {
 
 	private List<FileWatcherThread> threads = new ArrayList<>();
 
@@ -91,13 +91,11 @@ public class TaskPreprocessWatch extends DefaultTask {
 						continue;
 					}
 					Path outFile = currentFileUpdater.right();
-					Path inFile = currentFileUpdater.middle();
 					List<String> outLines = currentFileUpdater.left();
 
 					Discombobulator.pathLock.scheduleAndLock(outFile);
 					Files.createDirectories(outFile.getParent());
 					SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-					Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(inFile));
 					currentFileUpdater = null;
 
 					System.out.println(String.format("Processed the recently edited file %s\n", outFile.getFileName()));
@@ -145,80 +143,25 @@ public class TaskPreprocessWatch extends DefaultTask {
 
 				// Get path relative to the root dir
 				Path inFile = subSourceDir.relativize(path);
-
-				boolean ignore = false;
-				if (fileFilter.accept(inFile.toFile())) {
-					System.out.println(String.format("Ignoring %s", inFile.getFileName().toString()));
-					ignore = true;
-				}
-
+				String extension = FilenameUtils.getExtension(path.getFileName().toString());
 				try {
-					// Modify this file in other versions too
 
-					// Read the original file
-					String extension = FilenameUtils.getExtension(path.getFileName().toString());
-					List<String> linesToProcess = new ArrayList<>();
-					try {
-						if (!ignore)
-							linesToProcess = Files.readAllLines(path);
-					} catch (MalformedInputException e) {
-						Discombobulator.printError(String.format("Can't process the specified file, probably not a text file: %s\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", path.getFileName(), extension));
-						return;
-					}
+					// Preprocess in all sub versions
+					currentFileUpdater = PreprocessOperations.preprocessVersions(inFile, versions, fileFilter, extension, subSourceDir);
 
-					// Iterate through all versions
-					for (Entry<String, Path> versionPair : versions.entrySet()) {
-						String versionName = versionPair.getKey();
-						Path targetProject = versionPair.getValue();
-						Path targetSubSourceDir = targetProject.resolve("src");
-
-						// Write file
-						Path outFile = targetSubSourceDir.resolve(inFile);
-
-						if (ignore) {
-							Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-							continue;
-						}
-
-						// Preprocess the lines
-						List<String> outLines = Discombobulator.processor.preprocess(versionName, linesToProcess, extension);
-
-						// If the version equals the original version, then skip it
-						if (targetSubSourceDir.equals(subSourceDir)) {
-							currentFileUpdater = Triple.of(outLines, path, outFile);
-							continue;
-						}
-
-						schedule.scheduleAndLock(outFile);
-						Files.createDirectories(outFile.getParent());
-						SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-						Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(path));
-					}
-
-					// Modify this file in base project
-
+					// Preprocess in base dir
 					Path outFile = baseSourceDir.resolve(inFile);
-
-					if (ignore) {
-						Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-						return;
-					}
-
-					List<String> lines = Discombobulator.processor.preprocess(null, linesToProcess, extension);
-
-					Files.createDirectories(outFile.getParent());
-					SafeFileOperations.write(outFile, lines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-					Files.setLastModifiedTime(outFile, Files.getLastModifiedTime(path));
-					System.out.println(String.format("Processed %s in %s", path.getFileName(), version));
+					PreprocessOperations.preprocessFile(inFile, outFile, version, fileFilter, extension);
 
 					if (msgSeen == false) {
 						System.out.println("Type 1 to also preprocess this file\n");
 						msgSeen = true;
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
+				} catch (MalformedInputException e) {
+					Discombobulator.printError(String.format("Can't process file, probably not a text file...\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", extension), path.getFileName().toString());
+					return;
 				} catch (Exception e) {
-					Discombobulator.printError(e.getMessage());
+					Discombobulator.printError(e.getMessage(), path.getFileName().toString());
 					return;
 				}
 			}
