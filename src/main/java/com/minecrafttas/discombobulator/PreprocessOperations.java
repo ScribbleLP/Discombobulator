@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.minecrafttas.discombobulator.utils.BetterFileWalker;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.Triple;
 
@@ -45,14 +46,14 @@ public class PreprocessOperations {
 			return;
 		}
 
-		List<String> linesToProcess = readLines(inFile, extension);
+		List<String> linesToProcess = Files.readAllLines(inFile);
 
 		preprocessLines(linesToProcess, outFile, version, fileFilter, extension);
 	}
 
 	public static Triple<List<String>, Path, Path> /*<- TODO Change to it's own class*/ preprocessVersions(Path inFile, Map<String, Path> versions, FileFilter fileFilter, String extension, Path currentDir) throws Exception {
 
-		List<String> linesToProcess = readLines(inFile, extension);
+		List<String> linesToProcess = Files.readAllLines(inFile);
 
 		Triple<List<String>, Path, Path> out = null;
 
@@ -84,6 +85,16 @@ public class PreprocessOperations {
 		return out;
 	}
 
+	/**
+	 * Preprocesses and writes the inLines to a file
+	 * @param inLines The lines to preprocess
+	 * @param outFile The file to write to
+	 * @param version The version to preprocess to
+	 * @param fileFilter The file filter to ignore
+	 * @param extension The file extension
+	 * @return The preprocessed lines
+	 * @throws Exception
+	 */
 	public static List<String> preprocessLines(List<String> inLines, Path outFile, String version, FileFilter fileFilter, String extension) throws Exception {
 		List<String> lines = Discombobulator.processor.preprocess(version, inLines, extension);
 
@@ -97,7 +108,21 @@ public class PreprocessOperations {
 		return lines;
 	}
 
-	private static List<String> readLines(Path inFile, String extension) throws Exception {
-		return Files.readAllLines(inFile);
+	/**
+	 * Compares 2 source directories and deletes all files in otherSourceDir that are not in baseSourceDir
+	 * @param baseSourceDir The source dir to compare
+	 * @param otherSourceDir The source dir to delete from
+	 * @param version The version to check, used in logging
+	 */
+	public static void deleteExcessFiles(Path baseSourceDir, Path otherSourceDir, String version) {
+		BetterFileWalker.walk(otherSourceDir, path -> {
+			Path relativePath = otherSourceDir.relativize(path);
+			// Verify if file exists in base source dir
+			Path baseFile = baseSourceDir.resolve(relativePath);
+			if (!Files.exists(baseFile)) {
+				System.out.println(String.format("Deleting %s in version %s", path.getFileName().toString(), version));
+				SafeFileOperations.delete(baseFile);
+			}
+		});
 	}
 }

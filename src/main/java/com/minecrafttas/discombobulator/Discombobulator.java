@@ -19,6 +19,7 @@ import com.minecrafttas.discombobulator.tasks.TaskCollectBuilds;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessBase;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessVersion;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessWatch2;
+import com.minecrafttas.discombobulator.utils.PathLock;
 
 /**
  * Gradle plugin main class

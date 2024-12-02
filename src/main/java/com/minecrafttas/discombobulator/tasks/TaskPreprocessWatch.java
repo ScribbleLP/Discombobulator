@@ -19,8 +19,8 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
-import com.minecrafttas.discombobulator.PathLock;
 import com.minecrafttas.discombobulator.utils.FileWatcher;
+import com.minecrafttas.discombobulator.utils.PathLock;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.SocketLock;
 import com.minecrafttas.discombobulator.utils.Triple;

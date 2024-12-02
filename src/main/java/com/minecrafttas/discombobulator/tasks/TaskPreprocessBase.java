@@ -1,7 +1,7 @@
 package com.minecrafttas.discombobulator.tasks;
 
 import java.io.FileFilter;
-import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -16,7 +16,6 @@ import org.gradle.api.tasks.TaskAction;
 import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.PreprocessOperations;
 import com.minecrafttas.discombobulator.utils.BetterFileWalker;
-import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.SocketLock;
 
 /**
@@ -62,39 +61,26 @@ public class TaskPreprocessBase extends DefaultTask {
 
 		BetterFileWalker.walk(baseSourceDir, path -> {
 			System.out.println("Preprocessing " + path);
+			Path inFile = baseSourceDir.resolve(path);
+			String extension = FilenameUtils.getExtension(path.getFileName().toString());
+
 			try {
-				for (Entry<String, Path> versionPairs : versionsConfig.entrySet()) {
-					// Find input and output file
-					Path inFile = baseSourceDir.resolve(path);
-					Path subSourceDir = versionPairs.getValue().resolve("src");
-					Path outFile = subSourceDir.resolve(path);
-					String version = versionPairs.getKey();
-
-					String extension = FilenameUtils.getExtension(path.getFileName().toString());
-
-					PreprocessOperations.preprocessFile(inFile, outFile, version, fileFilter, extension);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw new RuntimeException("Could not write to filesystem.", e);
+				PreprocessOperations.preprocessVersions(inFile, versionsConfig, fileFilter, extension, baseSourceDir);
+			} catch (MalformedInputException e) {
+				Discombobulator.printError(String.format("Can't process file, probably not a text file...\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", extension), path.getFileName().toString());
+				return;
 			} catch (Exception e) {
-				Discombobulator.printError(e.getMessage());
+				Discombobulator.printError(e.getMessage(), path.getFileName().toString());
 				return;
 			}
 		});
 
-		// Delete all excess file in version folders
-		for (Entry<String, Path> versionPairs : versionsConfig.entrySet()) {
-			String version = versionPairs.getKey();
-
-			BetterFileWalker.walk(baseSourceDir, path -> {
-				// Verify if file exists in base source dir
-				Path originalFile = baseSourceDir.resolve(path);
-				if (!Files.exists(originalFile)) {
-					System.out.println("Deleting " + originalFile + " in " + version);
-					SafeFileOperations.delete(originalFile);
-				}
-			});
+		// Delete all excess files in version folders
+		for (Entry<String, Path> versionPair : versionsConfig.entrySet()) {
+			String version = versionPair.getKey();
+			Path versionProjectDir = versionPair.getValue();
+			Path versionSourceDir = versionProjectDir.resolve("src");
+			PreprocessOperations.deleteExcessFiles(baseSourceDir, versionSourceDir, version);
 		}
 
 		// Unlock port

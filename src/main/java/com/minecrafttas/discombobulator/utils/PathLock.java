@@ -1,4 +1,4 @@
-package com.minecrafttas.discombobulator;
+package com.minecrafttas.discombobulator.utils;
 
 import java.nio.file.Path;
 import java.util.Collections;
