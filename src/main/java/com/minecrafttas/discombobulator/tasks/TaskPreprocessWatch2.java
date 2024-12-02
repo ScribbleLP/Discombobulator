@@ -13,12 +13,10 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
-import com.minecrafttas.discombobulator.PreprocessOperations;
 import com.minecrafttas.discombobulator.utils.FileWatcher;
 import com.minecrafttas.discombobulator.utils.PathLock;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
@@ -28,7 +26,7 @@ import com.minecrafttas.discombobulator.utils.Triple;
 /**
  * This task preprocesses the source code on file change
  * 
- * @author Pancake
+ * @author Pancake, Scribble
  */
 public class TaskPreprocessWatch2 extends DefaultTask {
 
@@ -43,8 +41,6 @@ public class TaskPreprocessWatch2 extends DefaultTask {
 
 	private boolean msgSeen = false;
 
-	private WildcardFileFilter fileFilter;
-
 	@TaskAction
 	public void preprocessWatch() {
 		System.out.println(Discombobulator.getSplash());
@@ -55,11 +51,6 @@ public class TaskPreprocessWatch2 extends DefaultTask {
 		// Prepare list of physical version folders
 		Path baseProjectDir = this.getProject().getProjectDir().toPath();
 		baseSourceDir = baseProjectDir.resolve("src");
-
-		List<String> ignored = Discombobulator.ignored;
-		fileFilter = WildcardFileFilter.builder().setWildcards(ignored).get();
-		if (!ignored.isEmpty())
-			System.out.println(String.format("Ignoring %s\n\n", ignored));
 
 		Map<String, Path> versionsConfig;
 		try {
@@ -147,11 +138,11 @@ public class TaskPreprocessWatch2 extends DefaultTask {
 				try {
 
 					// Preprocess in all sub versions
-					currentFileUpdater = PreprocessOperations.preprocessVersions(inFile, versions, fileFilter, extension, subSourceDir);
+					currentFileUpdater = Discombobulator.fileProcessor.preprocessVersions(inFile, versions, extension, subSourceDir);
 
 					// Preprocess in base dir
 					Path outFile = baseSourceDir.resolve(inFile);
-					PreprocessOperations.preprocessFile(inFile, outFile, version, fileFilter, extension);
+					Discombobulator.fileProcessor.preprocessFile(inFile, outFile, version, extension);
 
 					if (msgSeen == false) {
 						System.out.println("Type 1 to also preprocess this file\n");

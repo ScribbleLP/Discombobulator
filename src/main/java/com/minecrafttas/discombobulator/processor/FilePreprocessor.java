@@ -1,6 +1,5 @@
-package com.minecrafttas.discombobulator;
+package com.minecrafttas.discombobulator.processor;
 
-import java.io.FileFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -9,13 +8,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.filefilter.WildcardFileFilter;
+
+import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.utils.BetterFileWalker;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.Triple;
 
-public class PreprocessOperations {
+public class FilePreprocessor {
 
-	public static void preprocessFile(Path inFile, Path outFile, String version, FileFilter fileFilter, String extension) throws Exception {
+	private final LinePreprocessor processor;
+	private final WildcardFileFilter fileFilter;
+
+	public FilePreprocessor(LinePreprocessor processor, WildcardFileFilter fileFilter) {
+		this.processor = processor;
+		this.fileFilter = fileFilter;
+	}
+
+	public void preprocessFile(Path inFile, Path outFile, String version, String extension) throws Exception {
 
 //		System.out.println(inFile);
 //		System.out.println(outFile+"\n");
@@ -48,10 +58,10 @@ public class PreprocessOperations {
 
 		List<String> linesToProcess = Files.readAllLines(inFile);
 
-		preprocessLines(linesToProcess, outFile, version, fileFilter, extension);
+		preprocessLines(linesToProcess, outFile, version, extension);
 	}
 
-	public static Triple<List<String>, Path, Path> /*<- TODO Change to it's own class*/ preprocessVersions(Path inFile, Map<String, Path> versions, FileFilter fileFilter, String extension, Path currentDir) throws Exception {
+	public Triple<List<String>, Path, Path> /*<- TODO Change to it's own class*/ preprocessVersions(Path inFile, Map<String, Path> versions, String extension, Path currentDir) throws Exception {
 
 		List<String> linesToProcess = Files.readAllLines(inFile);
 
@@ -71,7 +81,7 @@ public class PreprocessOperations {
 			}
 
 			// Preprocess the lines
-			List<String> outLines = Discombobulator.processor.preprocess(versionName, linesToProcess, extension);
+			List<String> outLines = processor.preprocess(versionName, linesToProcess, extension);
 
 			// If the version equals the original version, then skip it
 			if (targetSubSourceDir.equals(currentDir)) {
@@ -79,7 +89,7 @@ public class PreprocessOperations {
 				continue;
 			}
 
-			preprocessLines(outLines, outFile, versionName, fileFilter, extension);
+			preprocessLines(outLines, outFile, versionName, extension);
 		}
 
 		return out;
@@ -90,13 +100,12 @@ public class PreprocessOperations {
 	 * @param inLines The lines to preprocess
 	 * @param outFile The file to write to
 	 * @param version The version to preprocess to
-	 * @param fileFilter The file filter to ignore
 	 * @param extension The file extension
 	 * @return The preprocessed lines
 	 * @throws Exception
 	 */
-	public static List<String> preprocessLines(List<String> inLines, Path outFile, String version, FileFilter fileFilter, String extension) throws Exception {
-		List<String> lines = Discombobulator.processor.preprocess(version, inLines, extension);
+	public List<String> preprocessLines(List<String> inLines, Path outFile, String version, String extension) throws Exception {
+		List<String> lines = processor.preprocess(version, inLines, extension);
 
 		// Lock the file
 		Discombobulator.pathLock.scheduleAndLock(outFile);
@@ -124,5 +133,13 @@ public class PreprocessOperations {
 				SafeFileOperations.delete(baseFile);
 			}
 		});
+	}
+
+	public LinePreprocessor getLineProcessor() {
+		return processor;
+	}
+
+	public WildcardFileFilter getFileFilter() {
+		return fileFilter;
 	}
 }

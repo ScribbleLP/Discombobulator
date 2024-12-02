@@ -8,14 +8,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.minecrafttas.discombobulator.Processor;
+import com.minecrafttas.discombobulator.processor.LinePreprocessor;
 import com.minecrafttas.discombobulator.utils.Pair;
 
 class ProcessorTestVersionBlockInverted extends TestBase {
 
 	private List<String> allVersions = Arrays.asList("1.12.2", "1.12", "1.11.2", "1.8.9", "1.7.10");
 
-	private Processor processor = new Processor(allVersions, null, true);
+	private LinePreprocessor processor = new LinePreprocessor(allVersions, null, true);
 
 	/**
 	 * TargetVersion: 1.8.9

@@ -1,4 +1,4 @@
-package com.minecrafttas.discombobulator;
+package com.minecrafttas.discombobulator.processor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ import com.minecrafttas.discombobulator.utils.Pair;
  * @author Scribble
  *
  */
-public class Processor {
+public class LinePreprocessor {
 	private final Pattern regexBlocks = Pattern.compile("^\\s*\\/\\/ *(#+) *(.+)");
 	private final Pattern regexHashtag = Pattern.compile("^\\s*# *(#+) *(.+)");
 	private final Pattern regexPatterns = Pattern.compile("^.+\\/\\/ *@(.+);");
@@ -54,7 +54,7 @@ public class Processor {
 	 * @param versions The versions to check for in an order
 	 * @param patterns The patterns to check for in no specific order
 	 */
-	public Processor(List<String> versions, Map<String, Map<String, String>> patterns) {
+	public LinePreprocessor(List<String> versions, Map<String, Map<String, String>> patterns) {
 		this(versions, patterns, false);
 	}
 
@@ -73,7 +73,7 @@ public class Processor {
 	 * @param versions The versions to check for in an order
 	 * @param patterns The patterns to check for in no specific order
 	 */
-	public Processor(List<String> versions, Map<String, Map<String, String>> patterns, boolean inverted) {
+	public LinePreprocessor(List<String> versions, Map<String, Map<String, String>> patterns, boolean inverted) {
 		if (versions == null) {
 			throw new NullPointerException("Versions can't be null!");
 		}
@@ -546,7 +546,7 @@ public class Processor {
 		/**
 		 * Returns the version index of this versionBlock used for sorting.
 		 * 
-		 * For example if {@linkplain Processor#versions} contains:
+		 * For example if {@linkplain LinePreprocessor#versions} contains:
 		 * 
 		 * <pre>
 		 * 1.18.1
@@ -566,7 +566,7 @@ public class Processor {
 		 * </pre>
 		 * 
 		 * 
-		 * @return The index of the specified version from {@linkplain Processor#versions}
+		 * @return The index of the specified version from {@linkplain LinePreprocessor#versions}
 		 */
 		public int getVersionIndex() {
 			if (version.equals("end")) { // Special behaviour if the version is "end"
@@ -685,7 +685,7 @@ public class Processor {
 		//====================================== Sorting
 
 		/**
-		 * Sorts all blocks by the order of when they appear in {@linkplain Processor#versions}
+		 * Sorts all blocks by the order of when they appear in {@linkplain LinePreprocessor#versions}
 		 */
 		public void sortByVersionIndex() {
 			blocks.sort((left, right) -> {

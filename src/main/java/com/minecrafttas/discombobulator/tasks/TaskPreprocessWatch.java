@@ -56,11 +56,6 @@ public class TaskPreprocessWatch extends DefaultTask {
 		Path baseProjectDir = this.getProject().getProjectDir().toPath();
 		baseSourceDir = baseProjectDir.resolve("src");
 
-		List<String> ignored = Discombobulator.ignored;
-		fileFilter = WildcardFileFilter.builder().setWildcards(ignored).get();
-		if (!ignored.isEmpty())
-			System.out.println(String.format("Ignoring %s\n\n", ignored));
-
 		Map<String, Path> versionsConfig;
 		try {
 			versionsConfig = Discombobulator.getVersionPairs(baseProjectDir);
@@ -181,7 +176,7 @@ public class TaskPreprocessWatch extends DefaultTask {
 						}
 
 						// Preprocess the lines
-						List<String> outLines = Discombobulator.processor.preprocess(versionName, linesToProcess, extension);
+						List<String> outLines = Discombobulator.fileProcessor.getLineProcessor().preprocess(versionName, linesToProcess, extension);
 
 						// If the version equals the original version, then skip it
 						if (targetSubSourceDir.equals(subSourceDir)) {
@@ -204,7 +199,7 @@ public class TaskPreprocessWatch extends DefaultTask {
 						return;
 					}
 
-					List<String> lines = Discombobulator.processor.preprocess(null, linesToProcess, extension);
+					List<String> lines = Discombobulator.fileProcessor.getLineProcessor().preprocess(null, linesToProcess, extension);
 
 					Files.createDirectories(outFile.getParent());
 					SafeFileOperations.write(outFile, lines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);

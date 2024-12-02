@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -15,6 +16,8 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 
 import com.minecrafttas.discombobulator.extensions.PreprocessingConfiguration;
+import com.minecrafttas.discombobulator.processor.FilePreprocessor;
+import com.minecrafttas.discombobulator.processor.LinePreprocessor;
 import com.minecrafttas.discombobulator.tasks.TaskCollectBuilds;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessBase;
 import com.minecrafttas.discombobulator.tasks.TaskPreprocessVersion;
@@ -32,13 +35,11 @@ public class Discombobulator implements Plugin<Project> {
 
 	public static PreprocessingConfiguration config;
 
-	public static Processor processor;
+	public static FilePreprocessor fileProcessor;
 
 	public static PathLock pathLock;
 
 	private static String discoVersion;
-
-	public static List<String> ignored;
 
 	/**
 	 * Apply the gradle plugin to the project
@@ -90,7 +91,12 @@ public class Discombobulator implements Plugin<Project> {
 				return;
 			}
 			List<String> versionStrings = new ArrayList<>(versionPairs.keySet());
-			processor = new Processor(versionStrings, config.getPatterns().get(), inverted);
+			LinePreprocessor processor = new LinePreprocessor(versionStrings, config.getPatterns().get(), inverted);
+
+			List<String> ignored = config.getIgnoredFileFormats().getOrElse(new ArrayList<>());
+			WildcardFileFilter fileFilter = WildcardFileFilter.builder().setWildcards(ignored).get();
+
+			fileProcessor = new FilePreprocessor(processor, fileFilter);
 
 			// Yes this is yoinked from the gradle forums to get the disco version. Is there
 			// a better method? Probably. Do I care? Currently, no.
@@ -98,8 +104,6 @@ public class Discombobulator implements Plugin<Project> {
 			final String version = classpath.getResolvedConfiguration().getResolvedArtifacts().stream().map(artifact -> artifact.getModuleVersion().getId()).filter(id -> "com.minecrafttas".equalsIgnoreCase(id.getGroup())
 					&& "discombobulator".equalsIgnoreCase(id.getName())).findAny().map(ModuleVersionIdentifier::getVersion).orElseThrow(() -> new IllegalStateException("Discombobulator plugin has been deployed with wrong coordinates: expected group to be 'com.minecrafttas' and name to be 'Discombobulator'"));
 			discoVersion = version;
-
-			ignored = config.getIgnoredFileFormats().getOrElse(new ArrayList<>());
 		});
 
 	}
@@ -152,7 +156,7 @@ public class Discombobulator implements Plugin<Project> {
 	public static void printError(String line) {
 		System.err.println("\033[0;31m" + line + "\033[0m");
 	}
-	
+
 	public static void printError(String line, String filename) {
 		printError(String.format("[%s] %s", filename, line));
 	}

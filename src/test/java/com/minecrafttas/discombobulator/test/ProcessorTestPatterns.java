@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.minecrafttas.discombobulator.Processor;
+import com.minecrafttas.discombobulator.processor.LinePreprocessor;
 import com.minecrafttas.discombobulator.utils.Pair;
 
 class ProcessorTestPatterns extends TestBase {
@@ -18,7 +18,7 @@ class ProcessorTestPatterns extends TestBase {
 
 	private List<String> allVersions = Arrays.asList("1.15.2", "1.14.4", "1.13.2", "1.12.2", "1.11.2");
 
-	private Processor processor = new Processor(allVersions, patterns);
+	private LinePreprocessor processor = new LinePreprocessor(allVersions, patterns);
 
 	/**
 	 * TargetVersion: 1.14.4

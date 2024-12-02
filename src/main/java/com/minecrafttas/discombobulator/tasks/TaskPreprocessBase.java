@@ -1,27 +1,24 @@
 package com.minecrafttas.discombobulator.tasks;
 
-import java.io.FileFilter;
 import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
-import com.minecrafttas.discombobulator.PreprocessOperations;
+import com.minecrafttas.discombobulator.processor.FilePreprocessor;
 import com.minecrafttas.discombobulator.utils.BetterFileWalker;
 import com.minecrafttas.discombobulator.utils.SocketLock;
 
 /**
  * This task preprocesses the base source code into all versions.
  * 
- * @author Pancake
+ * @author Pancake, Scribble
  */
 public class TaskPreprocessBase extends DefaultTask {
 
@@ -49,12 +46,6 @@ public class TaskPreprocessBase extends DefaultTask {
 
 		System.out.println("Preprocessing base source...\n");
 
-		List<String> ignored = Discombobulator.ignored;
-
-		FileFilter fileFilter = WildcardFileFilter.builder().setWildcards(ignored).get();
-		if (!ignored.isEmpty())
-			System.out.println(String.format("Ignoring %s\n\n", ignored));
-
 		Path baseSourceDir = baseProjectDir.resolve("src");
 		if (!Files.exists(baseSourceDir))
 			throw new RuntimeException("Base source folder not found");
@@ -65,7 +56,7 @@ public class TaskPreprocessBase extends DefaultTask {
 			String extension = FilenameUtils.getExtension(path.getFileName().toString());
 
 			try {
-				PreprocessOperations.preprocessVersions(inFile, versionsConfig, fileFilter, extension, baseSourceDir);
+				Discombobulator.fileProcessor.preprocessVersions(inFile, versionsConfig, extension, baseSourceDir);
 			} catch (MalformedInputException e) {
 				Discombobulator.printError(String.format("Can't process file, probably not a text file...\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", extension), path.getFileName().toString());
 				return;
@@ -80,7 +71,7 @@ public class TaskPreprocessBase extends DefaultTask {
 			String version = versionPair.getKey();
 			Path versionProjectDir = versionPair.getValue();
 			Path versionSourceDir = versionProjectDir.resolve("src");
-			PreprocessOperations.deleteExcessFiles(baseSourceDir, versionSourceDir, version);
+			FilePreprocessor.deleteExcessFiles(baseSourceDir, versionSourceDir, version);
 		}
 
 		// Unlock port
