@@ -28,7 +28,7 @@ public class FilePreprocessor {
 	public void preprocessFile(Path inFile, Path outFile, String version, String extension) throws Exception {
 
 //		System.out.println(inFile);
-//		System.out.println(outFile+"\n");
+//		System.out.println(outFile + "\n");
 
 		/*
 		 *  Check if file was just preprocessed.
@@ -50,7 +50,7 @@ public class FilePreprocessor {
 			return;
 		}
 
-		if (fileFilter.accept(inFile.toFile())) {
+		if (fileFilter != null && fileFilter.accept(inFile.toFile())) {
 			System.out.println(String.format("Ignoring %s", inFile.getFileName().toString()));
 			Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING);
 			return;
@@ -63,7 +63,17 @@ public class FilePreprocessor {
 
 	public Triple<List<String>, Path, Path> /*<- TODO Change to it's own class*/ preprocessVersions(Path inFile, Map<String, Path> versions, String extension, Path currentDir) throws Exception {
 
-		List<String> linesToProcess = Files.readAllLines(inFile);
+//		System.out.println(inFile);
+
+		boolean ignored = fileFilter != null && fileFilter.accept(inFile.toFile());
+
+		Path relativeInFile = currentDir.relativize(inFile);
+
+		List<String> linesToProcess = null;
+		if (!ignored)
+			linesToProcess = Files.readAllLines(inFile);
+		else
+			System.out.println(String.format("Ignoring %s", inFile.getFileName().toString()));
 
 		Triple<List<String>, Path, Path> out = null;
 
@@ -72,10 +82,9 @@ public class FilePreprocessor {
 			String versionName = versionPair.getKey();
 			Path targetProject = versionPair.getValue();
 			Path targetSubSourceDir = targetProject.resolve("src");
-			Path outFile = targetSubSourceDir.resolve(inFile);
+			Path outFile = targetSubSourceDir.resolve(relativeInFile);
 
-			if (fileFilter.accept(inFile.toFile())) {
-				System.out.println(String.format("Ignoring %s", inFile.getFileName().toString()));
+			if (ignored) {
 				Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING);
 				continue;
 			}
@@ -124,12 +133,11 @@ public class FilePreprocessor {
 	 * @param version The version to check, used in logging
 	 */
 	public static void deleteExcessFiles(Path baseSourceDir, Path otherSourceDir, String version) {
-		BetterFileWalker.walk(otherSourceDir, path -> {
-			Path relativePath = otherSourceDir.relativize(path);
+		BetterFileWalker.walk(otherSourceDir, relativePath -> {
 			// Verify if file exists in base source dir
 			Path baseFile = baseSourceDir.resolve(relativePath);
 			if (!Files.exists(baseFile)) {
-				System.out.println(String.format("Deleting %s in version %s", path.getFileName().toString(), version));
+				System.out.println(String.format("Deleting %s in version %s", relativePath.getFileName().toString(), version));
 				SafeFileOperations.delete(baseFile);
 			}
 		});

@@ -13,17 +13,19 @@ import com.minecrafttas.discombobulator.utils.Pair;
 
 public class TestBase {
 
+	protected Path testResources = Paths.get("src/test/resources");
+
 	protected Pair<List<String>, List<String>> getLines(String folder, String actualName, String expectedName) throws IOException {
 
 		List<String> linesBase = null;
 		if (actualName != null) {
-			Path actualFile = Paths.get(String.format("src/test/resources/%s/%s", folder, actualName));
+			Path actualFile = testResources.resolve(String.format("/%s/%s", folder, actualName));
 			linesBase = Files.readAllLines(actualFile, StandardCharsets.UTF_8);
 		}
 
 		List<String> linesExpected = null;
 		if (expectedName != null) {
-			Path expectedFile = Paths.get(String.format("src/test/resources/%s/%s", folder, expectedName));
+			Path expectedFile = testResources.resolve(String.format("%s/%s/%s", folder, expectedName));
 			linesExpected = Files.readAllLines(expectedFile, StandardCharsets.UTF_8);
 		}
 
@@ -32,5 +34,9 @@ public class TestBase {
 
 	protected String getExtension(String actualName) {
 		return FileNameUtils.getExtension(Paths.get(actualName));
+	}
+
+	protected List<String> readTestResourcesFile(Path file) throws IOException {
+		return Files.readAllLines(testResources.resolve(file), StandardCharsets.UTF_8);
 	}
 }

@@ -59,9 +59,11 @@ public class TaskPreprocessBase extends DefaultTask {
 				Discombobulator.fileProcessor.preprocessVersions(inFile, versionsConfig, extension, baseSourceDir);
 			} catch (MalformedInputException e) {
 				Discombobulator.printError(String.format("Can't process file, probably not a text file...\n Maybe add ignoredFileFormats = [\"*.%s\"] to the build.gradle?", extension), path.getFileName().toString());
+				e.printStackTrace();
 				return;
 			} catch (Exception e) {
 				Discombobulator.printError(e.getMessage(), path.getFileName().toString());
+				e.printStackTrace();
 				return;
 			}
 		});

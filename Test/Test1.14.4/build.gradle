@@ -1,8 +1,10 @@
 plugins {
-	id 'fabric-loom' version '1.7-SNAPSHOT'
+	id 'fabric-loom' version '1.8-SNAPSHOT'
 }
 
-sourceCompatibility = targetCompatibility = 1.8
+java {
+	sourceCompatibility = targetCompatibility = 1.8
+}
 
 dependencies {
 	minecraft "com.mojang:minecraft:1.14.4"

@@ -133,16 +133,16 @@ public class TaskPreprocessWatch2 extends DefaultTask {
 					return;
 
 				// Get path relative to the root dir
-				Path inFile = subSourceDir.relativize(path);
+				Path relativeInFile = subSourceDir.relativize(path);
 				String extension = FilenameUtils.getExtension(path.getFileName().toString());
 				try {
 
 					// Preprocess in all sub versions
-					currentFileUpdater = Discombobulator.fileProcessor.preprocessVersions(inFile, versions, extension, subSourceDir);
+					currentFileUpdater = Discombobulator.fileProcessor.preprocessVersions(path, versions, extension, subSourceDir);
 
 					// Preprocess in base dir
-					Path outFile = baseSourceDir.resolve(inFile);
-					Discombobulator.fileProcessor.preprocessFile(inFile, outFile, version, extension);
+					Path outFile = baseSourceDir.resolve(relativeInFile);
+					Discombobulator.fileProcessor.preprocessFile(path, outFile, null, extension);
 
 					if (msgSeen == false) {
 						System.out.println("Type 1 to also preprocess this file\n");
