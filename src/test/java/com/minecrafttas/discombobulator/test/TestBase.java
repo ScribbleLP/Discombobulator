@@ -19,13 +19,13 @@ public class TestBase {
 
 		List<String> linesBase = null;
 		if (actualName != null) {
-			Path actualFile = testResources.resolve(String.format("/%s/%s", folder, actualName));
+			Path actualFile = testResources.resolve(String.format("%s/%s", folder, actualName));
 			linesBase = Files.readAllLines(actualFile, StandardCharsets.UTF_8);
 		}
 
 		List<String> linesExpected = null;
 		if (expectedName != null) {
-			Path expectedFile = testResources.resolve(String.format("%s/%s/%s", folder, expectedName));
+			Path expectedFile = testResources.resolve(String.format("%s/%s", folder, expectedName));
 			linesExpected = Files.readAllLines(expectedFile, StandardCharsets.UTF_8);
 		}
 
