@@ -3,7 +3,6 @@ package com.minecrafttas.discombobulator.processor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +11,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.utils.BetterFileWalker;
+import com.minecrafttas.discombobulator.utils.LineFeedHelper;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.Triple;
 
@@ -112,7 +112,7 @@ public class FilePreprocessor {
 
 		// Write file and update last modified date
 		Files.createDirectories(outFile.getParent());
-		SafeFileOperations.write(outFile, lines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+		Files.write(outFile, String.join(LineFeedHelper.newLine(), lines).getBytes());
 
 		return lines;
 	}
