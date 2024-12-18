@@ -18,6 +18,7 @@ import org.gradle.api.tasks.TaskAction;
 
 import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.utils.FileWatcher;
+import com.minecrafttas.discombobulator.utils.LineFeedHelper;
 import com.minecrafttas.discombobulator.utils.PathLock;
 import com.minecrafttas.discombobulator.utils.SafeFileOperations;
 import com.minecrafttas.discombobulator.utils.SocketLock;
@@ -51,6 +52,8 @@ public class TaskPreprocessWatch2 extends DefaultTask {
 		// Prepare list of physical version folders
 		Path baseProjectDir = this.getProject().getProjectDir().toPath();
 		baseSourceDir = baseProjectDir.resolve("src");
+
+		LineFeedHelper.printMessage();
 
 		Map<String, Path> versionsConfig;
 		try {
@@ -89,7 +92,7 @@ public class TaskPreprocessWatch2 extends DefaultTask {
 					SafeFileOperations.write(outFile, outLines, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 					currentFileUpdater = null;
 
-					System.out.println(String.format("Processed the recently edited file %s\n", outFile.getFileName()));
+					System.out.println(String.format("Preprocessed the recently edited file \033[0;35m%s\033[0;37m\n", outFile.getFileName()));
 				}
 			}
 		} catch (IOException e1) {
@@ -191,7 +194,7 @@ public class TaskPreprocessWatch2 extends DefaultTask {
 
 		public FileWatcherThread(FileWatcher watcher, String version) {
 			super("FileWatcher-" + version);
-			System.out.println("Started watching " + version);
+			System.out.println(String.format("Started watching \033[0;32m%s\033[0;37m", version));
 			this.watcher = watcher;
 			this.setDaemon(true);
 			this.start();

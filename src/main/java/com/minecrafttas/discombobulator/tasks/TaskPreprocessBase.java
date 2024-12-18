@@ -13,6 +13,7 @@ import org.gradle.api.tasks.TaskAction;
 import com.minecrafttas.discombobulator.Discombobulator;
 import com.minecrafttas.discombobulator.processor.FilePreprocessor;
 import com.minecrafttas.discombobulator.utils.BetterFileWalker;
+import com.minecrafttas.discombobulator.utils.LineFeedHelper;
 import com.minecrafttas.discombobulator.utils.SocketLock;
 
 /**
@@ -43,6 +44,8 @@ public class TaskPreprocessBase extends DefaultTask {
 			}
 			return;
 		}
+
+		LineFeedHelper.printMessage();
 
 		System.out.println("Preprocessing base source...\n");
 

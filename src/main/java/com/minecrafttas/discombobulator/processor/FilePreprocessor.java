@@ -63,7 +63,7 @@ public class FilePreprocessor {
 
 	public Triple<List<String>, Path, Path> /*<- TODO Change to it's own class*/ preprocessVersions(Path inFile, Map<String, Path> versions, String extension, Path currentDir) throws Exception {
 
-//		System.out.println(inFile);
+		System.out.println(String.format("Preprocessing \033[0;35m%s\033[0;37m\n", inFile.getFileName().toString()));
 
 		boolean ignored = fileFilter != null && fileFilter.accept(inFile.toFile());
 
@@ -85,6 +85,7 @@ public class FilePreprocessor {
 			Path outFile = targetSubSourceDir.resolve(relativeInFile);
 
 			if (ignored) {
+				System.out.println(String.format("into version \033[0;36m%s\033[0;37m", versionName));
 				Files.copy(inFile, outFile, StandardCopyOption.REPLACE_EXISTING);
 				continue;
 			}
@@ -99,6 +100,7 @@ public class FilePreprocessor {
 			}
 
 			preprocessLines(outLines, outFile, versionName, extension);
+			System.out.println(String.format("into version \033[0;36m%s\033[0;37m", versionName));
 		}
 
 		return out;
@@ -121,7 +123,14 @@ public class FilePreprocessor {
 
 		// Write file and update last modified date
 		Files.createDirectories(outFile.getParent());
-		Files.write(outFile, String.join(LineFeedHelper.newLine(), lines).getBytes());
+
+		StringBuilder stringBuilder = new StringBuilder();
+		String linefeed = LineFeedHelper.newLine();
+		for (String line : lines) {
+			stringBuilder.append(line);
+			stringBuilder.append(linefeed);
+		}
+		Files.write(outFile, stringBuilder.toString().getBytes());
 
 		return lines;
 	}
